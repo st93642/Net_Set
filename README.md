@@ -130,11 +130,12 @@ Notes:
 
 - Default Linux setup uses Quad9 with Cloudflare fallback
 
-- Provider templates used by `net_set.ps1`:
-      - Cloudflare: `https://cloudflare-dns.com/dns-query` (IPs: `1.1.1.1`, `2606:4700:4700::1111`)
-      - Quad9: `https://dns.quad9.net/dns-query` (IPs: `9.9.9.9`, `149.112.112.112`, `2620:fe::fe`, `2620:fe::9`)
-      - OpenDNS: `https://doh.opendns.com/dns-query` (IPs: `208.67.222.222`, `208.67.220.220`)
-      - NextDNS: `https://dns.nextdns.io/<config-id>` (requires user config ID for per-profile endpoint)
+## Provider templates used by `net_set.ps1`
+
+- Cloudflare: `https://cloudflare-dns.com/dns-query` (IPs: `1.1.1.1`, `2606:4700:4700::1111`)
+- Quad9: `https://dns.quad9.net/dns-query` (IPs: `9.9.9.9`, `149.112.112.112`, `2620:fe::fe`, `2620:fe::9`)
+- OpenDNS: `https://doh.opendns.com/dns-query` (IPs: `208.67.222.222`, `208.67.220.220`)
+- NextDNS: `https://dns.nextdns.io/<config-id>` (requires user config ID for per-profile endpoint)
 
 ### Firewall Rules
 
