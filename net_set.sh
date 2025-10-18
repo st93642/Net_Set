@@ -26,25 +26,49 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Check if running as root
-if [ "$EUID" -ne 0 ]; then
+if [ "$(id -u)" -ne 0 ]; then
    echo -e "${RED}This script must be run as root${NC}" 
    exit 1
 fi
 
 print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+    printf "${BLUE}[INFO]${NC} %s\n" "$1"
 }
 
 print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+    printf "${GREEN}[SUCCESS]${NC} %s\n" "$1"
 }
 
 print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    printf "${YELLOW}[WARNING]${NC} %s\n" "$1"
 }
 
 print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    printf "${RED}[ERROR]${NC} %s\n" "$1"
+}
+
+# Get public IP addresses using ident.me
+get_public_ips() {
+    print_status "Fetching public IP addresses..."
+    
+    if command -v curl >/dev/null 2>&1; then
+        ipv4=$(curl -s --max-time 10 https://v4.ident.me 2>/dev/null)
+        ipv6=$(curl -s --max-time 10 https://v6.ident.me 2>/dev/null)
+        
+        if [ -n "$ipv4" ]; then
+            printf "${GREEN}Public IPv4:${NC} %s\n" "$ipv4"
+        else
+            print_warning "Could not fetch public IPv4"
+        fi
+        
+        if [ -n "$ipv6" ]; then
+            printf "${GREEN}Public IPv6:${NC} %s\n" "$ipv6"
+        else
+            print_warning "Could not fetch public IPv6"
+        fi
+    else
+        print_warning "curl not available, cannot fetch public IPs"
+    fi
 }
 
 # Backup current configuration
@@ -259,6 +283,9 @@ test_configuration() {
     print_status "Current DNS configuration:"
     cat /etc/resolv.conf | grep -v '^#' | grep -v '^$'
     
+    # Fetch and display public IP addresses
+    get_public_ips
+    
     # Test DoH (basic check) with Cloudflare endpoint
     if ping -c1 -W2 8.8.8.8 >/dev/null 2>&1; then
         if command -v curl >/dev/null 2>&1; then
@@ -298,14 +325,14 @@ test_configuration() {
 
 # Main execution function
 main() {
-    echo "=================================================="
-    echo "    Network Security Configuration Script"
-    echo "    Features: IPv6 + DNS over HTTPS + Strict Security"
-    echo "=================================================="
+    printf "${BLUE}==================================================${NC}\n"
+    printf "${BLUE}    Network Security Configuration Script${NC}\n"
+    printf "${BLUE}    Features: IPv6 + DNS over HTTPS + Strict Security${NC}\n"
+    printf "${BLUE}==================================================${NC}\n"
     echo
     
     # Confirm with user
-    echo -n "This will modify network settings. Continue? (y/N): "
+    printf "${YELLOW}This will modify network settings. Continue? (y/N): ${NC}"
     read -r REPLY
     echo
     if [ "$REPLY" != "y" ] && [ "$REPLY" != "Y" ]; then
