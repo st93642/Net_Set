@@ -1,203 +1,319 @@
-# Network Security Configuration Scripts
+# Net_Set - Network Security Configuration Scripts
 
-## Overview
+A collection of scripts to configure secure network settings with IPv6, DNS over HTTPS (DoH), and strict security policies.
 
-This repository contains Bash and PowerShell scripts for configuring and verifying network security settings on Linux and Windows systems:
+## 📋 What These Scripts Do
 
-- `net_set.sh`: Linux network security configuration script
-- `network-verify.sh`: Linux network security verification script
-- `net_set.ps1`: Windows network security configuration script (PowerShell for Windows 10/11)
+- **Enable IPv6** on all network interfaces
+- **Configure DNS over HTTPS** for encrypted DNS queries
+- **Apply strict security settings** to protect against network attacks
+- **Set up firewall rules** for enhanced security
+- **Test network connectivity** and performance
+- **Verify security configurations** are working properly
 
-## Features
+## 🚀 Quick Start
 
-### net_set.sh (Linux)
+### For Linux Users
 
-- **IPv6 Configuration**: Enables IPv6 with secure settings
-- **DNS over HTTPS (DoH)**: Configures Quad9 DNS with Cloudflare fallback
-- **Network Security**: Applies strict sysctl security settings
-- **Firewall**: Configures iptables/ip6tables with secure rules
-- **Backup**: Creates backups of current configuration before changes
-
-### network-verify.sh (Linux)
-
-- **IPv6 Status Check**: Displays IPv6 configuration and connectivity
-- **DNS Configuration**: Shows current DNS settings
-- **DoH Status**: Checks DNS over HTTPS resolver status
-- **Security Settings**: Verifies applied sysctl security parameters
-- **Firewall Status**: Displays current firewall rules
-- **Connectivity Tests**: Tests IPv4/IPv6 and DNS resolution
-- **DoH Connectivity**: Tests DoH endpoint accessibility over IPv4/IPv6
-- **Censorship Detection**: Tests access to potentially blocked websites
-
-## Requirements
-
-### Linux
-
-- Linux distribution with systemd
-- Root privileges (sudo)
-- curl (for DoH and censorship tests)
-- iptables/ip6tables
-- systemd-resolved
-
-### Windows
-
-- Windows 10 version 2004 or later / Windows 11
-- Administrator privileges
-- PowerShell 5.1 or later (or PowerShell Core)
-- Internet connection
-
-## Installation
-
-1. Clone or download the scripts to your system
-2. For Linux: Make them executable:
-
-   ```bash
-   chmod +x net_set.sh network-verify.sh
-   ```
-
-## Usage
-
-### Network Security Setup (Linux)
-
-Run the setup script as root to configure network security:
+#### Step 1: Download the Scripts
 
 ```bash
+# If you have git installed:
+git clone https://github.com/st93642/Net_Set.git
+cd Net_Set
+
+# Or download the files directly to your computer
+```
+
+#### Step 2: Make Scripts Executable
+
+```bash
+chmod +x net_set.sh network-verify.sh
+```
+
+#### Step 3: Run the Configuration Script
+
+```bash
+# Run as administrator (required for system changes)
 sudo ./net_set.sh
 ```
 
-The script will:
-
-1. Prompt for confirmation
-2. Create backups of current settings
-3. Enable IPv6 with security settings
-4. Configure DNS over HTTPS with Quad9 (default)
-5. Apply strict network security parameters
-6. Configure firewall rules
-7. Run verification tests
-
-### Network Verification (Linux)
-
-Run the verification script to check current network status:
+#### Step 4: Verify Everything Works
 
 ```bash
-sudo ./network-verify.sh
+# Test your network configuration
+./network-verify.sh
 ```
 
-This script can be run anytime to verify the security configuration and network connectivity.
+## For Windows Users
 
-### Windows - `net_set.ps1`
+### Step 1: Download the Scripts
 
-The PowerShell script `net_set.ps1` performs equivalent actions on Windows 10/11. Key features:
+- Download all files to a folder on your computer (e.g., `C:\Net_Set\`)
 
-- Backups of network configuration and firewall policy are saved to `C:\Windows\Temp\net_set_backup_<timestamp>`
-- Enables IPv6 and per-adapter IPv6 binding
-- Configures DNS over HTTPS (DoH) via Windows policy registry (supports Cloudflare, Quad9, OpenDNS, NextDNS)
-- Applies best-effort network hardening registry changes (disable IP forwarding, ICMP redirects, etc.)
-- Configures Windows Defender Firewall rules (allow SSH 22, HTTPS 443; block HTTP 80 by default)
-- Verification: shows local IPv4/IPv6 addresses, public IP (via ident.me), DNS resolution, DoH test (curl), connectivity pings
+#### Step 2: Run PowerShell as Administrator
 
-Run the Windows script in an elevated PowerShell prompt:
+1. Press `Windows + X`
+2. Select "Windows PowerShell (Admin)" or "Terminal (Admin)"
+3. Click "Yes" when prompted by User Account Control
+
+#### Step 3: Navigate to Script Folder
 
 ```powershell
-# Interactive run
-powershell -ExecutionPolicy Bypass -File .\net_set.ps1
+cd C:\Net_Set
 ```
 
-Non-interactive options (environment variables):
-
-- `PREFERRED_DOH_PROVIDER` — set to one of `Cloudflare`, `Quad9`, `OpenDNS`, `NextDNS` to pre-select DoH provider
-- `NEXTDNS_ID` — when `PREFERRED_DOH_PROVIDER=NextDNS`, set this to your NextDNS configuration ID to use the per-config endpoint
-
-Example (PowerShell):
+#### Step 4: Run the Configuration Script
 
 ```powershell
-$env:PREFERRED_DOH_PROVIDER = 'Cloudflare'
-$env:NEXTDNS_ID = 'your-nextdns-id-if-applicable'
-powershell -ExecutionPolicy Bypass -File .\net_set.ps1
+.\net_set.ps1
 ```
 
-Notes:
+#### Step 5: Verify Everything Works
 
-- DoH policy changes may require a reboot or Group Policy refresh to take effect. If the machine is domain-joined, local policy edits may be overridden by AD group policies.
-- The script attempts to use `curl` for DoH tests if available; otherwise it uses PowerShell web requests.
-- The script pauses at the end with "Press Enter to close..." so the console window remains open for review.
+The Windows script includes built-in verification that runs automatically after configuration:
 
-## Detailed Configuration
+- ✅ IPv4/IPv6 connectivity tests
+- ✅ DNS resolution tests  
+- ✅ DoH (DNS over HTTPS) tests
+- ✅ Public IP address detection
+- ✅ Local interface information
+- ✅ Firewall rule verification
 
-### DNS over HTTPS
+## 📖 Detailed Instructions
 
-- Supported providers (Windows script): Cloudflare, Quad9, OpenDNS, NextDNS
+### Linux Installation (Ubuntu/Debian)
 
-- Default Linux setup uses Quad9 with Cloudflare fallback
+#### Prerequisites
 
-## Provider templates used by `net_set.ps1`
+- Ubuntu 18.04+ or Debian 10+
+- Internet connection
+- Administrator access (sudo)
 
-- Cloudflare: `https://cloudflare-dns.com/dns-query` (IPs: `1.1.1.1`, `2606:4700:4700::1111`)
-- Quad9: `https://dns.quad9.net/dns-query` (IPs: `9.9.9.9`, `149.112.112.112`, `2620:fe::fe`, `2620:fe::9`)
-- OpenDNS: `https://doh.opendns.com/dns-query` (IPs: `208.67.222.222`, `208.67.220.220`)
-- NextDNS: `https://dns.nextdns.io/<config-id>` (requires user config ID for per-profile endpoint)
+#### Step-by-Step Installation
 
-### Firewall Rules
+1. **Open Terminal**
+   - Press `Ctrl + Alt + T`
+   - Or search for "Terminal" in applications
 
-- **Default Policy**: INPUT DROP, OUTPUT ACCEPT, FORWARD DROP
-- **Allowed Incoming**:
-  - SSH (port 22)
-  - HTTPS (port 443)
-  - ICMP (ping)
-  - Established connections
-- **IPv6 Support**: Identical rules for IPv6
+2. **Download Scripts**
 
-### Security Settings
+   ```bash
+   # Download the repository
+   git clone https://github.com/st93642/Net_Set.git
+   cd Net_Set
+   ```
 
-- **IPv4**: Disabled IP forwarding, redirects, source routing
-- **IPv6**: Disabled redirects, router advertisements, forwarding
-- **TCP**: SYN cookies, optimized buffer sizes
-- **ICMP**: Broadcast ignore, bogus response filtering
+3. **Make Scripts Executable**
 
-## Troubleshooting
+   ```bash
+   chmod +x *.sh
+   ```
+
+4. **Run Configuration Script**
+
+   ```bash
+   sudo ./net_set.sh
+   ```
+
+   - Enter your password when prompted
+   - Type `y` when asked to continue
+   - Wait for the script to complete
+
+5. **Test Your Configuration**
+
+   ```bash
+   ./network-verify.sh
+   ```
+
+#### What Happens During Installation
+
+- ✅ Backs up your current network settings
+- ✅ Enables IPv6 on all interfaces
+- ✅ Configures DNS over HTTPS (encrypted DNS)
+- ✅ Applies strict security settings
+- ✅ Sets up firewall rules
+- ✅ Tests the configuration
+
+### Windows Installation
+
+#### Prerequisites
+
+- Windows 10/11
+- PowerShell 5.0+
+- Administrator access
+
+#### Step-by-Step Installation
+
+1. **Download Scripts**
+   - Download all files to a folder (e.g., `C:\Net_Set\`)
+
+2. **Open PowerShell as Administrator**
+   - Press `Windows + X`
+   - Select "Windows PowerShell (Admin)"
+   - Click "Yes" when prompted
+
+3. **Enable Script Execution**
+
+   ```powershell
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+   ```
+
+4. **Navigate to Script Folder**
+
+   ```powershell
+   cd C:\Net_Set
+   ```
+
+5. **Run Configuration Script**
+
+   ```powershell
+   .\net_set.ps1
+   ```
+
+6. **Test Your Configuration**
+
+The Windows script automatically runs comprehensive verification tests after configuration:
+
+- ✅ IPv4/IPv6 connectivity tests
+- ✅ DNS resolution tests  
+- ✅ DoH (DNS over HTTPS) tests
+- ✅ Public IP address detection
+- ✅ Local interface information
+- ✅ Firewall rule verification
+
+## 🔧 Troubleshooting
 
 ### Common Issues
 
-1. **"systemd-resolved not available"**
-   - Install systemd-resolved: `sudo apt install systemd-resolved` (Ubuntu/Debian)
-   - Or `sudo yum install systemd` (RHEL/CentOS)
+#### "Permission Denied" Error (Linux)
 
-2. **DoH test fails**
-   - Check internet connectivity
-   - Verify curl is installed (Linux) or PowerShell has internet access (Windows)
-   - May be blocked by firewall, proxy, or network policies
-   - On Windows: Check if TLS 1.2+ is enabled and PowerShell execution policy allows web requests
+```bash
+# Solution: Run with sudo
+sudo ./net_set.sh
+```
 
-3. **Firewall blocks legitimate traffic**
-   - Review rules: `sudo iptables -L` (Linux) or `Get-NetFirewallRule` (Windows)
-   - Add necessary rules for your services
+#### "Execution Policy" Error (Windows)
 
-4. **IPv6 issues**
-   - Check if IPv6 is enabled: `ip -6 addr show` (Linux) or `Get-NetAdapter | Get-NetIPAddress` (Windows)
-   - Verify ISP supports IPv6
+```powershell
+# Solution: Enable script execution
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
 
-### Recovery
+#### "Command Not Found" Error
 
-- Backups are created in `/etc/network/backup_YYYYMMDD_HHMMSS/`
-- Restore files manually if needed
-- Reboot may be required for some changes
+```bash
+# Solution: Make sure you're in the right directory
+pwd
+ls -la *.sh
+```
 
-## Security Considerations
+#### Network Issues After Configuration
 
-- **Firewall**: Blocks all incoming traffic except essential services
-- **DNS**: Uses encrypted DNS with malware blocking
-- **IPv6**: Configured with security best practices
-- **Sysctl**: Hardened network stack parameters
+```bash
+# Solution: Restart network services
+sudo systemctl restart systemd-resolved
+sudo systemctl restart NetworkManager
+```
 
-## License
+### Restoring Original Settings
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+#### Linux
 
-## Contributing
+```bash
+# The script creates backups in /etc/network/backup_*
+# To restore:
+sudo cp /etc/network/backup_*/resolv.conf.backup /etc/resolv.conf
+sudo cp /etc/network/backup_*/resolved.conf.backup /etc/systemd/resolved.conf
+sudo systemctl restart systemd-resolved
+```
 
-Feel free to submit issues or pull requests for improvements.
+#### Windows
 
-## Changelog
+```powershell
+# Restore network settings
+netsh winsock reset
+netsh int ip reset
+# Restart your computer
+```
 
-- **v1.0**: Initial release with IPv6, DoH, firewall, and verification
-- **Updates**: POSIX compatibility, HTTPS-only firewall, comprehensive testing
+## 📊 Understanding the Output
+
+### Network Verification Results
+
+When you run `network-verify.sh`, you'll see:
+
+- **IPv6 Status**: Shows if IPv6 is working
+- **DNS Configuration**: Your DNS servers
+- **Public IPs**: Your external IP addresses
+- **Security Settings**: Kernel security parameters
+- **Connectivity Tests**: Ping tests to various servers
+- **Speed Test**: Download/upload speeds
+
+### What the Colors Mean
+
+- 🟢 **Green**: Everything working correctly
+- 🟡 **Yellow**: Warning or information
+- 🔴 **Red**: Error or failure
+- 🔵 **Blue**: Status information
+
+## 🛡️ Security Features
+
+### What Gets Configured
+
+1. **IPv6 Security**
+   - Enables IPv6 on all interfaces
+   - Disables IPv6 forwarding
+   - Blocks IPv6 redirects
+
+2. **DNS Security**
+   - DNS over HTTPS (DoH) encryption
+   - DNSSEC validation
+   - Secure DNS servers (Quad9, Cloudflare)
+
+3. **Network Security**
+   - Disables IP forwarding
+   - Blocks ICMP redirects
+   - Enables SYN cookies
+   - Strict firewall rules
+
+4. **Firewall Rules**
+   - Blocks all incoming connections by default
+   - Allows only SSH (port 22) and HTTPS (port 443)
+   - Allows established connections
+   - Blocks all other traffic
+
+## 📞 Support
+
+### Getting Help
+
+1. **Check the verification script output** for error messages
+2. **Look at the backup files** in `/etc/network/backup_*` (Linux)
+3. **Restart your computer** if you experience issues
+4. **Restore from backup** if needed (see troubleshooting section)
+
+### Common Questions
+
+**Q: Will this break my internet connection?**
+A: No, the scripts are designed to maintain connectivity while adding security.
+
+**Q: Can I undo the changes?**
+A: Yes, the script creates backups and provides restore instructions.
+
+**Q: Do I need to restart my computer?**
+A: A restart is recommended for all changes to take effect.
+
+**Q: Will this slow down my internet?**
+A: No, it may actually improve performance with better DNS settings.
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🤝 Contributing
+
+Feel free to submit issues and enhancement requests!
+
+---
+
+**Note**: These scripts modify system network settings. Always backup your system before running them, and test in a safe environment first.
