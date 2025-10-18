@@ -198,3 +198,99 @@ else
     printf "${GREEN}DNS Resolution:${NC} "
     print_error "FAIL (possibly censored)"
 fi
+
+# Speedtest functionality
+run_speedtest() {
+    section "Network Speed Test"
+    
+    # Check if speedtest-cli is available
+    if command -v speedtest-cli >/dev/null 2>&1; then
+        print_status "Running speedtest using speedtest-cli..."
+        printf "${YELLOW}Download Speed:${NC} "
+        speedtest-cli --simple 2>/dev/null | grep -E "Download|Upload" | while read -r line; do
+            if echo "$line" | grep -q "Download"; then
+                download_speed=$(echo "$line" | awk '{print $2, $3}')
+                printf "${GREEN}%s${NC}\n" "$download_speed"
+            elif echo "$line" | grep -q "Upload"; then
+                upload_speed=$(echo "$line" | awk '{print $2, $3}')
+                printf "${YELLOW}Upload Speed:${NC} ${GREEN}%s${NC}\n" "$upload_speed"
+            fi
+        done
+        
+        # Get ping information
+        printf "${YELLOW}Ping:${NC} "
+        ping_result=$(speedtest-cli --simple 2>/dev/null | grep "Ping" | awk '{print $2, $3}')
+        if [ -n "$ping_result" ]; then
+            printf "${GREEN}%s${NC}\n" "$ping_result"
+        else
+            print_warning "Ping information not available"
+        fi
+        
+    elif command -v fast >/dev/null 2>&1; then
+        print_status "Running speedtest using fast-cli..."
+        fast_result=$(fast 2>/dev/null)
+        if [ -n "$fast_result" ]; then
+            printf "${YELLOW}Download Speed:${NC} ${GREEN}%s${NC}\n" "$fast_result"
+        else
+            print_warning "Fast-cli test failed"
+        fi
+        
+    elif command -v curl >/dev/null 2>&1; then
+        print_status "Running comprehensive speed test using curl..."
+        
+        # Test download speed with small file (1MB)
+        printf "${YELLOW}Testing download speed (1MB file)...${NC}\n"
+        start_time=$(date +%s.%N)
+        if curl -s --max-time 30 -o /dev/null http://speedtest.tele2.net/1MB.zip 2>/dev/null; then
+            end_time=$(date +%s.%N)
+            duration=$(echo "$end_time - $start_time" | bc 2>/dev/null || echo "1")
+            speed=$(echo "scale=2; 8 / $duration" | bc 2>/dev/null || echo "N/A")
+            printf "${YELLOW}Download Speed (1MB):${NC} ${GREEN}%s Mbps${NC}\n" "$speed"
+        else
+            print_warning "1MB speed test failed"
+        fi
+        
+        # Test download speed with medium file (10MB)
+        printf "${YELLOW}Testing download speed (10MB file)...${NC}\n"
+        start_time=$(date +%s.%N)
+        if curl -s --max-time 60 -o /dev/null http://speedtest.tele2.net/10MB.zip 2>/dev/null; then
+            end_time=$(date +%s.%N)
+            duration=$(echo "$end_time - $start_time" | bc 2>/dev/null || echo "1")
+            speed=$(echo "scale=2; 80 / $duration" | bc 2>/dev/null || echo "N/A")
+            printf "${YELLOW}Download Speed (10MB):${NC} ${GREEN}%s Mbps${NC}\n" "$speed"
+        else
+            print_warning "10MB speed test failed"
+        fi
+        
+        # Test download speed with large file (100MB)
+        printf "${YELLOW}Testing download speed (100MB file)...${NC}\n"
+        start_time=$(date +%s.%N)
+        if curl -s --max-time 300 -o /dev/null http://speedtest.tele2.net/100MB.zip 2>/dev/null; then
+            end_time=$(date +%s.%N)
+            duration=$(echo "$end_time - $start_time" | bc 2>/dev/null || echo "1")
+            speed=$(echo "scale=2; 800 / $duration" | bc 2>/dev/null || echo "N/A")
+            printf "${YELLOW}Download Speed (100MB):${NC} ${GREEN}%s Mbps${NC}\n" "$speed"
+        else
+            print_warning "100MB speed test failed"
+        fi
+        
+        # Test latency to multiple servers
+        printf "${YELLOW}Testing latency...${NC}\n"
+        for server in "8.8.8.8" "1.1.1.1" "9.9.9.9"; do
+            printf "${YELLOW}%s:${NC} " "$server"
+            ping_result=$(ping -c 3 -W 2 "$server" 2>/dev/null | tail -1 | awk -F'/' '{print $5}')
+            if [ -n "$ping_result" ]; then
+                printf "${GREEN}%s ms${NC}\n" "$ping_result"
+            else
+                print_warning "No response"
+            fi
+        done
+        
+    else
+        print_warning "No speedtest tools available (speedtest-cli, fast-cli, or curl)"
+        print_status "To install speedtest-cli: sudo apt install speedtest-cli (Ubuntu/Debian) or pip install speedtest-cli"
+    fi
+}
+
+# Run speedtest
+run_speedtest
