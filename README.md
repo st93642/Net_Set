@@ -41,8 +41,8 @@ sudo ./net_set.sh
 #### Step 4: Verify Everything Works
 
 ```bash
-# Test your network configuration
-./network-verify.sh
+# Test your network configuration (requires sudo for system access)
+sudo ./network-verify.sh
 ```
 
 ## For Windows Users
@@ -122,9 +122,10 @@ The Windows script includes built-in verification that runs automatically after 
 
 5. **Test Your Configuration**
 
-   ```bash
-   ./network-verify.sh
-   ```
+```bash
+# Run verification with sudo for system access
+sudo ./network-verify.sh
+```
 
 #### What Happens During Installation
 
@@ -191,6 +192,7 @@ The Windows script automatically runs comprehensive verification tests after con
 ```bash
 # Solution: Run with sudo
 sudo ./net_set.sh
+sudo ./network-verify.sh
 ```
 
 #### "Execution Policy" Error (Windows)
