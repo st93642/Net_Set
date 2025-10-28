@@ -5,7 +5,7 @@
 #  By: st93642@students.tsi.lv                               TT    SSSSSSS II #
 #                                                            TT         SS II #
 #  Created: Oct 18 2025 11:18 st93642                        TT    SSSSSSS II #
-#  Updated: Oct 18 2025 12:12 st93642                                         #
+#  Updated: Oct 28 2025 23:29 st93642                                         #
 #                                                                             #
 #   Transport and Telecommunication Institute - Riga, Latvia                  #
 #                       https://tsi.lv                                        #
@@ -120,6 +120,20 @@ EOF
 configure_doh() {
     print_status "Configuring DNS over HTTPS..."
     
+    # Disable NetworkManager DNS management to prevent override
+    if [ -f /etc/NetworkManager/NetworkManager.conf ]; then
+        if ! grep -q "dns=none" /etc/NetworkManager/NetworkManager.conf; then
+            sed -i '/^\[main\]/a dns=none' /etc/NetworkManager/NetworkManager.conf
+            systemctl restart NetworkManager 2>/dev/null || true
+        fi
+    fi
+    
+    # Set DNS for active NetworkManager connections
+    for conn in $(nmcli -t -f NAME,TYPE,STATE con show | grep ':wifi:activated' | cut -d: -f1); do
+        nmcli con mod "$conn" ipv4.dns "9.9.9.9 149.112.112.112" ipv4.ignore-auto-dns yes 2>/dev/null || true
+        nmcli con mod "$conn" ipv6.dns "2620:fe::fe 2620:fe::9" ipv6.ignore-auto-dns yes 2>/dev/null || true
+    done
+    
     # Check if systemd-resolved is available
     if ! systemctl is-active systemd-resolved >/dev/null 2>&1; then
         print_warning "systemd-resolved not active, installing..."
@@ -140,7 +154,7 @@ DNSSEC=allow-downgrade
 Cache=yes
 DNSStubListener=yes
 ReadEtcHosts=yes
-FallbackDNS=1.1.1.1#cloudflare-dns.com 1.0.0.1#cloudflare-dns.com 2606:4700:4700::1111#cloudflare-dns.com 2606:4700:4700::1001#cloudflare-dns.com
+FallbackDNS=1.1.1.1#cloudflare-dns.com 1.0.0.1#cloudflare-dns.com 2606:4700:4700::1111#cloudflare-dns.com 2606:4700:4700::1001#cloudflare-dns.com 208.67.222.222#opendns.com 208.67.220.220#opendns.com 2620:119:35::35#opendns.com 2620:119:53::53#opendns.com 116.202.176.26#libredns.gr
 EOF
 
     # Create resolv.conf symlink
@@ -150,21 +164,7 @@ EOF
     systemctl enable systemd-resolved 2>/dev/null || true
     systemctl start systemd-resolved 2>/dev/null || true
     
-    # Alternative: Configure DoH via resolv.conf for non-systemd systems
-    if ! systemctl is-active systemd-resolved >/dev/null 2>&1; then
-        print_warning "Using resolv.conf fallback method for DoH"
-        cat > /etc/resolv.conf << 'EOF'
-# DNS over HTTPS configuration
-nameserver 9.9.9.9
-nameserver 149.112.112.112
-nameserver 2620:fe::fe
-nameserver 2620:fe::9
-options edns0 single-request-reopen
-options use-vc  # Force TLS
-EOF
-    fi
-    
-    print_success "DNS over HTTPS configured"
+    print_success "DNS over HTTPS configured with Quad9 primary"
 }
 
 # Configure strict network security settings
@@ -218,6 +218,11 @@ EOF
 # Configure firewall (using iptables/ip6tables)
 configure_firewall() {
     print_status "Configuring firewall rules..."
+    
+    # Install iptables-persistent to save rules
+    if ! dpkg -l | grep -q iptables-persistent; then
+        apt-get update && apt-get install -y iptables-persistent 2>/dev/null || print_warning "Could not install iptables-persistent"
+    fi
     
     # Flush existing rules
     iptables -F
