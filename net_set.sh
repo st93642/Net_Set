@@ -7,7 +7,7 @@
 #  By: st93642@students.tsi.lv                               TT    SSSSSSS II #
 #                                                            TT         SS II #
 #  Created: Oct 18 2025 11:18 st93642                        TT    SSSSSSS II #
-#  Updated: Oct 29 2025 18:12 st93642                                         #
+#  Updated: Oct 29 2025 19:19 st93642                                         #
 #                                                                             #
 #   Transport and Telecommunication Institute - Riga, Latvia                  #
 #                       https://tsi.lv                                        #
@@ -309,7 +309,9 @@ doh_probe_and_select() {
         prefer_ipv6=true
     fi
 
-    while IFS='|' read -r name url host; do
+    # Provider definitions: name|probe_url|hostname|dns_ipv4|dns_ipv6
+    # Use documented public DNS IPs, not resolved hostnames (which return CDN IPs)
+    while IFS='|' read -r name url host dns_ipv4 dns_ipv6; do
         [ -z "$name" ] && continue
         print_status "Probing DoH provider $name" >&2
         local curl_opts=(--max-time 8 -s -H 'accept: application/dns-json')
@@ -321,25 +323,21 @@ doh_probe_and_select() {
         local response
         response=$(curl "${curl_opts[@]}" "${url}?name=example.com&type=A" 2>/dev/null || true)
         if printf "%s" "$response" | grep -q '"Status"\|"Answer"'; then
-            local ips
-            ips=$(getent ahosts "$host" 2>/dev/null | awk '{print $1}' | uniq | head -n 6)
-            if [ -z "$ips" ] && command_exists host; then
-                ips=$(host "$host" 2>/dev/null | awk '/address/ {print $NF}' | uniq | head -n 6)
-            fi
+            # Use hardcoded public DNS IPs instead of resolving hostname
             local dns_entries=""
-            for ip in $ips; do
+            for ip in $dns_ipv4 $dns_ipv6; do
                 [ -z "$ip" ] && continue
-                dns_entries="$dns_entries $ip#$host"
+                dns_entries="$dns_entries $ip"
             done
             printf "%s|%s\n" "$name" "${dns_entries# }"
             return 0
         fi
         print_warning "$name DoH probe failed" >&2
     done <<'EOF'
-quad9|https://dns.quad9.net/dns-query|dns.quad9.net
-cloudflare|https://cloudflare-dns.com/dns-query|cloudflare-dns.com
-libredns|https://doh.libredns.gr/dns-query|doh.libredns.gr
-nextdns|https://doh.nextdns.io/dns-query|doh.nextdns.io
+cloudflare|https://cloudflare-dns.com/dns-query|cloudflare-dns.com|1.1.1.1 1.0.0.1|2606:4700:4700::1111 2606:4700:4700::1001
+quad9|https://dns.quad9.net/dns-query|dns.quad9.net|9.9.9.9 149.112.112.112|2620:fe::fe 2620:fe::9
+libredns|https://doh.libredns.gr/dns-query|doh.libredns.gr|116.202.176.26|2a01:4f8:1c0c:8274::1
+nextdns|https://doh.nextdns.io/dns-query|doh.nextdns.io|45.90.28.0 45.90.30.0|2a07:a8c0:: 2a07:a8c1::
 EOF
     return 1
 }
@@ -457,14 +455,14 @@ apply_doh_configuration() {
         name=${selection%%|*}
         dns_entries=${selection#*|}
     else
-        name="quad9"
-        dns_entries="9.9.9.9#dns.quad9.net 149.112.112.112#dns.quad9.net 2620:fe::fe#dns.quad9.net 2620:fe::9#dns.quad9.net"
-        print_warning "All probes failed; using conservative Quad9 defaults"
+        name="cloudflare"
+        dns_entries="1.1.1.1 1.0.0.1 2606:4700:4700::1111 2606:4700:4700::1001"
+        print_warning "All probes failed; using Cloudflare defaults"
     fi
     if [ -z "$dns_entries" ]; then
-        print_warning "No IPs resolved for $name; falling back to Quad9 set"
-        name="quad9"
-        dns_entries="9.9.9.9#dns.quad9.net 149.112.112.112#dns.quad9.net 2620:fe::fe#dns.quad9.net 2620:fe::9#dns.quad9.net"
+        print_warning "No IPs resolved for $name; falling back to Cloudflare"
+        name="cloudflare"
+        dns_entries="1.1.1.1 1.0.0.1 2606:4700:4700::1111 2606:4700:4700::1001"
     fi
 
     build_resolved_dropin "$name" "$dns_entries"
@@ -479,6 +477,16 @@ apply_doh_configuration() {
 
     systemctl enable systemd-resolved >/dev/null 2>&1 || true
     systemctl restart systemd-resolved >/dev/null 2>&1 || print_warning "systemd-resolved restart reported an error"
+    
+    # Validate DNS is working after configuration
+    show_progress "Validating DNS"
+    sleep 2  # Give systemd-resolved time to start
+    if ! nslookup example.com >/dev/null 2>&1; then
+        print_warning "DNS validation failed - DNS queries are timing out"
+        print_warning "This may indicate incorrect DNS server addresses"
+        return 1
+    fi
+    print_success "DNS validation passed"
 }
 
 apply_firewall_rules() {
