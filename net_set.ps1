@@ -1,3 +1,16 @@
+#*****************************************************************************#
+#                                                                             #
+#  net_set.ps1                                            TTTTTTTT SSSSSSS II #
+#                                                            TT    SS      II #
+#  By: st93642@students.tsi.lv                               TT    SSSSSSS II #
+#                                                            TT         SS II #
+#  Created: Oct 29 2025 16:23 st93642                        TT    SSSSSSS II #
+#  Updated: Oct 29 2025 16:23 st93642                                         #
+#                                                                             #
+#   Transport and Telecommunication Institute - Riga, Latvia                  #
+#                       https://tsi.lv                                        #
+#*****************************************************************************#
+
 <#
 net_set.ps1 - Network Security Configuration for Windows 11
 
