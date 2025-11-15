@@ -6,7 +6,7 @@ A collection of scripts to configure secure network settings with IPv6, DNS over
 
 **User-friendly graphical interfaces are now available!**
 
-- 🖥️ **Linux GUI**: `net_set_ui.sh` - Automatic GUI (zenity) with terminal fallback, timeout protection
+- 🖥️ **Linux GUI**: `net_set_ui.sh` - Automatic GUI (zenity) with terminal fallback, timeout protection, smart sudo handling
 - 🪟 **Windows GUI**: `net_set_ui.ps1` - Modern Windows Forms interface with timeout protection
 - 📦 **Standalone executables**: Build scripts for both platforms
 

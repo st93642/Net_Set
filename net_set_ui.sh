@@ -236,21 +236,53 @@ run_verification() {
             echo "# Generating comprehensive report..."
             
             # Run verification with timeout and progress tracking
-            # Use timeout to prevent hanging on slow operations
-            if timeout 180 sudo "$VERIFY_SCRIPT" > "$tmpfile" 2>&1; then
-                echo "100"
-                echo "# Verification completed successfully!"
-            else
-                # Check if verification was killed by timeout
-                if [ $? -eq 124 ]; then
-                    echo "100"
-                    echo "# Verification completed (timeout after 3 minutes)"
-                    echo "# Speed tests may have been skipped due to timeout"
-                else
-                    echo "100"
-                    echo "# Verification completed with warnings!"
-                fi
-            fi
+                        # Use timeout to prevent hanging on slow operations
+                        # Check if we need sudo first
+                        if [ "$EUID" -eq 0 ]; then
+                            # Already root, no sudo needed
+                            if timeout 180 "$VERIFY_SCRIPT" > "$tmpfile" 2>&1; then
+                                echo "100"
+                                echo "# Verification completed successfully!"
+                            else
+                                # Check if verification was killed by timeout
+                                if [ $? -eq 124 ]; then
+                                    echo "100"
+                                    echo "# Verification completed (timeout after 3 minutes)"
+                                    echo "# Speed tests may have been skipped due to timeout"
+                                else
+                                    echo "100"
+                                    echo "# Verification completed with warnings!"
+                                fi
+                            fi
+                        else
+                            # Need sudo, check if we can get it without interactive prompt
+                            echo "# Checking for administrator privileges..."
+                            echo "# (This may require password prompt in background)"
+                            if sudo -n true 2>/dev/null; then
+                                # Can use sudo non-interactively
+                                if timeout 180 sudo -n "$VERIFY_SCRIPT" > "$tmpfile" 2>&1; then
+                                    echo "100"
+                                    echo "# Verification completed successfully!"
+                                else
+                                    # Check if verification was killed by timeout
+                                    if [ $? -eq 124 ]; then
+                                        echo "100"
+                                        echo "# Verification completed (timeout after 3 minutes)"
+                                        echo "# Speed tests may have been skipped due to timeout"
+                                    else
+                                        echo "100"
+                                        echo "# Verification completed with warnings!"
+                                    fi
+                                fi
+                            else
+                                # Need interactive sudo, warn user
+                                echo "100"
+                                echo "# Cannot run verification without interactive sudo"
+                                echo "# Please run 'sudo $VERIFY_SCRIPT' manually in terminal"
+                                echo "# or run this UI with sudo privileges"
+                                echo "# Verification aborted"
+                            fi
+                        fi
         ) | show_progress_gui "Verifying network configuration..."
         
         # Display results in a text window
@@ -316,7 +348,25 @@ run_verification() {
         echo "  [+] Security settings validation"
         echo
         
-        sudo "$VERIFY_SCRIPT"
+        # Check if we need sudo
+        if [ "$EUID" -eq 0 ]; then
+            echo -e "${GREEN}Running as root - no password required${NC}"
+            sudo "$VERIFY_SCRIPT"
+        else
+            echo -e "${YELLOW}Administrator privileges required for full verification${NC}"
+            echo "Attempting to run verification with sudo..."
+            if sudo -n true 2>/dev/null; then
+                echo -e "${GREEN}Using non-interactive sudo${NC}"
+                sudo -n "$VERIFY_SCRIPT"
+            else
+                echo -e "${RED}Interactive sudo required${NC}"
+                echo "Please run the following command manually:"
+                echo -e "${BLUE}sudo $VERIFY_SCRIPT${NC}"
+                echo ""
+                echo -e "${YELLOW}Or run this UI with sudo: sudo ./net_set_ui.sh${NC}"
+                exit 1
+            fi
+        fi
         
         echo
         echo -e "${GREEN}=== Verification Summary ===${NC}"
