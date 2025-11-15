@@ -315,7 +315,16 @@ $verifyButton.Add_Click({
         $verifyTextBox.ReadOnly = $true
         $verifyTextBox.Location = New-Object System.Drawing.Point(10, 10)
         $verifyTextBox.Size = New-Object System.Drawing.Size(660, 420)
-        $verifyTextBox.Font = New-Object System.Drawing.Font("Consolas", 9)
+        # Use a font that better supports Unicode characters
+        try {
+            $verifyTextBox.Font = New-Object System.Drawing.Font("Segoe UI Emoji", 9)
+        } catch {
+            try {
+                $verifyTextBox.Font = New-Object System.Drawing.Font("Microsoft Sans Serif", 9)
+            } catch {
+                $verifyTextBox.Font = New-Object System.Drawing.Font("Consolas", 9)
+            }
+        }
         
         $closeVerifyButton = New-Object System.Windows.Forms.Button
         $closeVerifyButton.Text = "Close"

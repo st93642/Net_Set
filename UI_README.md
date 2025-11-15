@@ -61,6 +61,7 @@ chmod +x net_set_ui.sh
 - **Progress Tracking**: Shows progress bars during configuration and verification
 - **User-Friendly Menu**: Easy-to-use interface for all operations
 - **Detailed Verification Results**: Scrollable text window showing comprehensive verification output including speed tests and censorship detection
+- **Clean Output**: ANSI color codes properly cleaned for GUI display, universal text icons [+] for compatibility
 - **Status Display**: Shows current network configuration status
 - **Error Handling**: Graceful error handling with informative messages
 
@@ -69,6 +70,7 @@ chmod +x net_set_ui.sh
 - **Administrator Detection**: Automatically requests elevation when needed
 - **Network Status Viewer**: Detailed network configuration display
 - **Comprehensive Verification**: Full verification suite including speed tests, censorship detection, and security checks
+- **Enhanced Font Support**: Optimized font selection for Unicode character support (✓, ⚠, ✗)
 - **Progress Indication**: Visual feedback during operations with detailed progress updates
 - **Professional Look**: Consistent with Windows UI standards
 

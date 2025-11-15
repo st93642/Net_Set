@@ -107,12 +107,19 @@ Both UI versions now provide:
 - No results displayed
 - Generic placeholder messages
 - Missing verification details
+- ANSI color codes showing as raw text in GUI
+- Icons not displaying properly
 
 ### After:
 - Clear progress indication with specific steps
 - Comprehensive results in dedicated window
 - Detailed verification information
 - Professional presentation of results
+- **Fixed Display Issues**:
+  - ANSI color codes properly cleaned for GUI display
+  - Universal text icons [+] instead of Unicode bullets
+  - Better font support in Windows UI for Unicode characters
+  - Clean, readable output in both GUI and terminal modes
 - Clear status indicators and summaries
 
 ## 🚀 Ready for Use

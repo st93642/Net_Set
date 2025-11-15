@@ -242,19 +242,36 @@ run_verification() {
         
         # Display results in a text window
         if [ -s "$tmpfile" ]; then
+            # Clean ANSI color codes and format output for GUI display
+            clean_output=$(sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' "$tmpfile" | \
+                         sed 's/\x1b\[[0-9]*[a-zA-Z]//g' | \
+                         sed 's/\[0;34m\]/[INFO]/g' | \
+                         sed 's/\[0;32m\]/[SUCCESS]/g' | \
+                         sed 's/\[1;33m\]/[WARNING]/g' | \
+                         sed 's/\[0;31m\]/[ERROR]/g' | \
+                         sed 's/\[0m\]//g' | \
+                         sed 's/\[NC\]//g' | \
+                         sed 's/^\[INFO\]/[INFO]/g' | \
+                         sed 's/^\[SUCCESS\]/[SUCCESS]/g' | \
+                         sed 's/^\[WARNING\]/[WARNING]/g' | \
+                         sed 's/^\[ERROR\]/[ERROR]/g' | \
+                         sed 's/===/===/g' | \
+                         sed 's/---/---/g' | \
+                         sed 's/Interface:/Interface:/g')
+            
             # Create a formatted results display with summary at top
             results_summary="=== Network Verification Summary ===\n\n"
             results_summary+="This verification checked:\n"
-            results_summary+="• IPv6 connectivity and configuration\n"
-            results_summary+="• DNS settings and DNS over HTTPS (DoH)\n"
-            results_summary+="• Public IP address detection (IPv4/IPv6)\n"
-            results_summary+="• Local network interface analysis\n"
-            results_summary+="• Network connectivity tests\n"
-            results_summary+="• Censorship detection tests\n"
-            results_summary+="• Network speed measurements\n"
-            results_summary+="• Security settings validation\n\n"
+            results_summary+="[+] IPv6 connectivity and configuration\n"
+            results_summary+="[+] DNS settings and DNS over HTTPS (DoH)\n"
+            results_summary+="[+] Public IP address detection (IPv4/IPv6)\n"
+            results_summary+="[+] Local network interface analysis\n"
+            results_summary+="[+] Network connectivity tests\n"
+            results_summary+="[+] Censorship detection tests\n"
+            results_summary+="[+] Network speed measurements\n"
+            results_summary+="[+] Security settings validation\n\n"
             results_summary+="=== Detailed Results ===\n\n"
-            results_summary+="$(cat "$tmpfile")"
+            results_summary+="$clean_output"
             
             # Use zenity to show the results in a scrollable text window
             echo -e "$results_summary" | zenity --text-info \
@@ -276,22 +293,22 @@ run_verification() {
         echo
         echo -e "${BLUE}=== Network Verification ===${NC}"
         echo "This verification will check:"
-        echo "  • IPv6 connectivity and configuration"
-        echo "  • DNS settings and DNS over HTTPS (DoH)"
-        echo "  • Public IP address detection (IPv4/IPv6)"
-        echo "  • Local network interface analysis"
-        echo "  • Network connectivity tests"
-        echo "  • Censorship detection tests"
-        echo "  • Network speed measurements"
-        echo "  • Security settings validation"
+        echo "  [+] IPv6 connectivity and configuration"
+        echo "  [+] DNS settings and DNS over HTTPS (DoH)"
+        echo "  [+] Public IP address detection (IPv4/IPv6)"
+        echo "  [+] Local network interface analysis"
+        echo "  [+] Network connectivity tests"
+        echo "  [+] Censorship detection tests"
+        echo "  [+] Network speed measurements"
+        echo "  [+] Security settings validation"
         echo
         
         sudo "$VERIFY_SCRIPT"
         
         echo
         echo -e "${GREEN}=== Verification Summary ===${NC}"
-        echo "✓ Network verification completed!"
-        echo "✓ Results shown above include:"
+        echo "[+] Network verification completed!"
+        echo "[+] Results shown above include:"
         echo "  - IPv6 connectivity status"
         echo "  - DNS configuration verification"
         echo "  - DNS over HTTPS (DoH) status"
