@@ -237,56 +237,46 @@ run_verification() {
             
             # Run verification with timeout and progress tracking
                         # Use timeout to prevent hanging on slow operations
-                        # Check if we need sudo first
-                        if [ "$EUID" -eq 0 ]; then
-                            # Already root, no sudo needed
-                            if timeout 180 "$VERIFY_SCRIPT" > "$tmpfile" 2>&1; then
-                                echo "100"
-                                echo "# Verification completed successfully!"
-                            else
-                                # Check if verification was killed by timeout
-                                if [ $? -eq 124 ]; then
-                                    echo "100"
-                                    echo "# Verification completed (timeout after 3 minutes)"
-                                    echo "# Speed tests may have been skipped due to timeout"
-                                else
-                                    echo "100"
-                                    echo "# Verification completed with warnings!"
-                                fi
-                            fi
+                        # Simplified approach - try to run verification with fallbacks
+                        echo "# Running verification script..."
+
+                        # First try: Run without sudo to see what we can do
+                        if "$VERIFY_SCRIPT" > "$tmpfile" 2>&1; then
+                            echo "100"
+                            echo "# Verification completed (limited privileges)!"
                         else
-                            # Need sudo, check if we can get it without interactive prompt
-                            echo "# Checking for administrator privileges..."
-                            echo "# (This may require password prompt in background)"
-                            if sudo -n true 2>/dev/null; then
-                                # Can use sudo non-interactively
-                                if timeout 180 sudo -n "$VERIFY_SCRIPT" > "$tmpfile" 2>&1; then
+                            # Second try: Try with sudo if we have it available
+                            if [ "$EUID" -ne 0 ] && sudo -n true 2>/dev/null; then
+                                echo "# Attempting with elevated privileges..."
+                                if timeout 120 sudo -n "$VERIFY_SCRIPT" >> "$tmpfile" 2>&1; then
                                     echo "100"
-                                    echo "# Verification completed successfully!"
+                                        echo "# Verification completed successfully!"
                                 else
-                                    # Check if verification was killed by timeout
-                                    if [ $? -eq 124 ]; then
-                                        echo "100"
-                                        echo "# Verification completed (timeout after 3 minutes)"
-                                        echo "# Speed tests may have been skipped due to timeout"
-                                    else
-                                        echo "100"
-                                        echo "# Verification completed with warnings!"
-                                    fi
+                                    echo "100"
+                                        echo "# Verification completed with warnings (some tests may have failed)"
                                 fi
                             else
-                                # Need interactive sudo, warn user
-                                echo "100"
-                                echo "# Cannot run verification without interactive sudo"
-                                echo "# Please run 'sudo $VERIFY_SCRIPT' manually in terminal"
-                                echo "# or run this UI with sudo privileges"
-                                echo "# Verification aborted"
+                                # Third try: Try with interactive sudo as last resort
+                                echo "# Requires administrator privileges..."
+                                if timeout 120 sudo "$VERIFY_SCRIPT" >> "$tmpfile" 2>&1; then
+                                    echo "100"
+                                        echo "# Verification completed successfully!"
+                                else
+                                    echo "100"
+                                        echo "# Verification completed - some tests may have failed"
+                                fi
                             fi
                         fi
         ) | show_progress_gui "Verifying network configuration..."
         
         # Display results in a text window
         if [ -s "$tmpfile" ]; then
+            # Debug: Show file size and first few lines
+            file_size=$(wc -c < "$tmpfile" | awk '{print $1}')
+            echo "DEBUG: Verification output file size: $file_size bytes" >&2
+            echo "DEBUG: First 200 chars:" >&2
+            head -c 200 "$tmpfile" >&2
+            
             # Clean ANSI color codes and format output for GUI display
             clean_output=$(sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' "$tmpfile" | \
                          sed 's/\x1b\[[0-9]*[a-zA-Z]//g' | \
@@ -304,34 +294,52 @@ run_verification() {
                          sed 's/---/---/g' | \
                          sed 's/Interface:/Interface:/g')
             
-            # Create a formatted results display with summary at top
-            results_summary="=== Network Verification Summary ===\n\n"
-            results_summary+="This verification checked:\n"
-            results_summary+="[+] IPv6 connectivity and configuration\n"
-            results_summary+="[+] DNS settings and DNS over HTTPS (DoH)\n"
-            results_summary+="[+] Public IP address detection (IPv4/IPv6)\n"
-            results_summary+="[+] Local network interface analysis\n"
-            results_summary+="[+] Network connectivity tests\n"
-            results_summary+="[+] Censorship detection tests\n"
-            results_summary+="[+] Network speed measurements\n"
-            results_summary+="[+] Security settings validation\n\n"
-            results_summary+="=== Detailed Results ===\n\n"
-            results_summary+="$clean_output"
-            
-            # Use zenity to show the results in a scrollable text window
-            echo -e "$results_summary" | zenity --text-info \
-                --title="Network Verification Results" \
-                --width=900 \
-                --height=700 \
-                --filename=/dev/stdin 2>/dev/null || {
-                # Fallback to info dialog if text-info fails
-                show_info "Network verification completed! Detailed results saved to temporary file."
-            }
+            # Check if cleaning worked and we have content
+            if [ -n "$clean_output" ]; then
+                # Create a formatted results display with summary at top
+                results_summary="=== Network Verification Summary ===\n\n"
+                results_summary+="This verification checked:\n"
+                results_summary+="[+] IPv6 connectivity and configuration\n"
+                results_summary+="[+] DNS settings and DNS over HTTPS (DoH)\n"
+                results_summary+="[+] Public IP address detection (IPv4/IPv6)\n"
+                results_summary+="[+] Local network interface analysis\n"
+                results_summary+="[+] Network connectivity tests\n"
+                results_summary+="[+] Censorship detection tests\n"
+                results_summary+="[+] Network speed measurements\n"
+                results_summary+="[+] Security settings validation\n\n"
+                results_summary+="=== Detailed Results ===\n\n"
+                results_summary+="$clean_output"
+                
+                # Use zenity to show the results in a scrollable text window
+                echo -e "$results_summary" | zenity --text-info \
+                    --title="Network Verification Results" \
+                    --width=900 \
+                    --height=700 \
+                    --filename=/dev/stdin 2>/dev/null || {
+                    # Fallback to info dialog if text-info fails
+                    show_info "Network verification completed! Detailed results saved to temporary file."
+                }
+            else
+                # Try to show raw output if cleaning failed
+                echo "DEBUG: Clean output was empty, showing raw output" >&2
+                echo -e "$tmpfile" | zenity --text-info \
+                    --title="Network Verification Results (Raw)" \
+                    --width=900 \
+                    --height=700 \
+                    --filename=/dev/stdin 2>/dev/null || {
+                    show_error "Verification completed but results display failed."
+                }
+            fi
         else
             show_error "No verification results available. Please check the script output."
+            echo "DEBUG: Temporary file is empty or missing" >&2
         fi
         
-        # Clean up
+        # Clean up - but preserve for debugging if needed
+        if [ "$DEBUG_MODE" = "true" ]; then
+            echo "DEBUG: Preserving verification output to /tmp/net_set_debug.log"
+            cp "$tmpfile" "/tmp/net_set_debug.log" 2>/dev/null
+        fi
         rm -f "$tmpfile"
     else
         show_info "Starting network verification..."

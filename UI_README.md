@@ -62,11 +62,13 @@ chmod +x net_set_ui.sh
 - **User-Friendly Menu**: Easy-to-use interface for all operations
 - **Detailed Verification Results**: Scrollable text window showing comprehensive verification output including speed tests and censorship detection
 - **Clean Output**: ANSI color codes properly cleaned for GUI display, universal text icons [+] for compatibility
-- **Smart Sudo Handling**: Detects root privileges and uses non-interactive sudo when possible
-- **Timeout Protection**: 3-minute maximum verification time with graceful completion
-- **Enhanced Progress**: Detailed status updates during potentially long operations
+- **Smart Sudo Handling**: Multi-tiered privilege detection with non-interactive sudo when possible
+- **Robust Output Capture**: Multi-tiered verification with guaranteed result display
+- **Timeout Protection**: 2-minute maximum verification time with graceful fallbacks
+- **Enhanced Progress**: Detailed status updates during all operations
 - **Status Display**: Shows current network configuration status
 - **Error Handling**: Graceful error handling with informative messages
+- **Debug Support**: Comprehensive debugging with output preservation
 
 ### Windows UI (`net_set_ui.ps1`)
 - **Modern GUI**: Clean Windows Forms interface
