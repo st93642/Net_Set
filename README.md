@@ -2,6 +2,25 @@
 
 A collection of scripts to configure secure network settings with IPv6, DNS over HTTPS (DoH), and strict security policies.
 
+## 🎉 NEW: Desktop UI Wrappers
+
+**User-friendly graphical interfaces are now available!**
+
+- 🖥️ **Linux GUI**: `net_set_ui.sh` - Automatic GUI (zenity) with terminal fallback
+- 🪟 **Windows GUI**: `net_set_ui.ps1` - Modern Windows Forms interface  
+- 📦 **Standalone executables**: Build scripts for both platforms
+
+**Quick UI Start:**
+```bash
+# Linux
+./net_set_ui.sh
+
+# Windows
+.\net_set_ui.ps1
+```
+
+See [UI_README.md](UI_README.md) for detailed UI documentation and [INSTALLATION.md](INSTALLATION.md) for installation guide.
+
 ## 📋 What These Scripts Do
 
 - **Enable IPv6** on all network interfaces
@@ -13,7 +32,26 @@ A collection of scripts to configure secure network settings with IPv6, DNS over
 
 ## 🚀 Quick Start
 
-### For Linux Users
+### 🎯 Recommended: Use the Desktop UI
+
+#### Linux Users
+```bash
+# Download and run the UI
+git clone https://github.com/st93642/Net_Set.git
+cd Net_Set
+chmod +x net_set_ui.sh
+./net_set_ui.sh
+```
+
+#### Windows Users
+```powershell
+# Download and extract files, then run
+.\net_set_ui.ps1
+```
+
+### 📜 Manual Script Usage
+
+#### For Linux Users
 
 #### Step 1: Download the Scripts
 
@@ -45,9 +83,9 @@ sudo ./net_set.sh
 sudo ./network-verify.sh
 ```
 
-## For Windows Users
+#### For Windows Users
 
-### Step 1: Download the Scripts
+#### Step 1: Download the Scripts
 
 - Download all files to a folder on your computer (e.g., `C:\Net_Set\`)
 
