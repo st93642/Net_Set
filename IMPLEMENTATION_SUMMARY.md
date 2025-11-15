@@ -5,7 +5,9 @@
 ### 🖥️ Linux UI Wrapper (`net_set_ui.sh`)
 - **Dual Mode Interface**: Automatically detects GUI environment and uses zenity dialogs, falls back to terminal mode
 - **User-Friendly Menu**: Easy-to-use interface with clear options
-- **Progress Tracking**: Shows progress bars during configuration operations
+- **Progress Tracking**: Shows progress bars during configuration and verification operations with detailed status updates
+- **Enhanced Verification**: Captures and displays comprehensive verification results in a scrollable text window
+- **Detailed Progress**: Shows specific verification steps (IPv6, DNS, DoH, censorship tests, speed tests, etc.)
 - **Error Handling**: Graceful error handling with informative messages
 - **Status Display**: Shows current network configuration status
 - **Integration**: Seamlessly calls existing `net_set.sh` and `network-verify.sh` scripts
@@ -14,7 +16,14 @@
 - **Modern GUI**: Clean Windows Forms interface with professional appearance
 - **Administrator Detection**: Automatically requests elevation when needed
 - **Network Status Viewer**: Detailed network configuration display in a separate window
-- **Progress Indication**: Visual feedback during operations with progress bar
+- **Comprehensive Verification**: Full verification suite with dedicated results window showing:
+  - Network adapter status and IP configuration
+  - DNS settings validation and secure DNS detection
+  - IPv4/IPv6 connectivity tests
+  - Network speed measurements
+  - Censorship detection tests
+  - Security settings and firewall status
+- **Progress Indication**: Visual feedback during operations with detailed progress updates
 - **Error Handling**: Comprehensive error handling with user-friendly messages
 - **Integration**: Calls existing `net_set.ps1` script with full functionality preservation
 

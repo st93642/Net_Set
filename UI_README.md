@@ -58,8 +58,9 @@ chmod +x net_set_ui.sh
 
 ### Linux UI (`net_set_ui.sh`)
 - **Dual Mode**: Automatically detects GUI environment and uses zenity dialogs, falls back to terminal mode
-- **Progress Tracking**: Shows progress bars during configuration
+- **Progress Tracking**: Shows progress bars during configuration and verification
 - **User-Friendly Menu**: Easy-to-use interface for all operations
+- **Detailed Verification Results**: Scrollable text window showing comprehensive verification output including speed tests and censorship detection
 - **Status Display**: Shows current network configuration status
 - **Error Handling**: Graceful error handling with informative messages
 
@@ -67,7 +68,8 @@ chmod +x net_set_ui.sh
 - **Modern GUI**: Clean Windows Forms interface
 - **Administrator Detection**: Automatically requests elevation when needed
 - **Network Status Viewer**: Detailed network configuration display
-- **Progress Indication**: Visual feedback during operations
+- **Comprehensive Verification**: Full verification suite including speed tests, censorship detection, and security checks
+- **Progress Indication**: Visual feedback during operations with detailed progress updates
 - **Professional Look**: Consistent with Windows UI standards
 
 ## 📋 UI Functionality
@@ -81,10 +83,12 @@ Both Linux and Windows versions provide:
    - Sets up firewall rules (where applicable)
 
 2. **Verify Network Configuration**
-   - Tests network connectivity
-   - Validates DNS configuration
-   - Checks security settings
-   - Runs performance tests
+   - Tests network connectivity (IPv4/IPv6)
+   - Validates DNS configuration and DNS over HTTPS
+   - Checks security settings and firewall status
+   - Runs performance tests with speed measurements
+   - Performs censorship detection tests
+   - Displays comprehensive verification results in a dedicated window
 
 3. **View Current Status**
    - Shows active network adapters

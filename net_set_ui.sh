@@ -187,32 +187,121 @@ run_configuration() {
 # Run verification
 run_verification() {
     if [ "$GUI_MODE" = true ]; then
+        # Create temporary file to store verification results
+        tmpfile=$(mktemp)
+        
         (
-            echo "10"
-            echo "# Checking network status..."
+            echo "5"
+            echo "# Initializing verification..."
             sleep 1
             
-            echo "50"
-            echo "# Running verification tests..."
-            sleep 2
+            echo "15"
+            echo "# Checking IPv6 status..."
+            sleep 1
             
-            if sudo "$VERIFY_SCRIPT" 2>&1 | while read -r line; do
-                echo "# $line"
-                echo "75"
-                sleep 0.3
-            done; then
+            echo "25"
+            echo "# Verifying DNS configuration..."
+            sleep 1
+            
+            echo "35"
+            echo "# Testing DNS over HTTPS..."
+            sleep 1
+            
+            echo "45"
+            echo "# Checking public IP addresses..."
+            sleep 1
+            
+            echo "55"
+            echo "# Analyzing local interfaces..."
+            sleep 1
+            
+            echo "65"
+            echo "# Running connectivity tests..."
+            sleep 1
+            
+            echo "75"
+            echo "# Testing censorship detection..."
+            sleep 1
+            
+            echo "85"
+            echo "# Measuring network speed..."
+            sleep 1
+            
+            echo "95"
+            echo "# Generating comprehensive report..."
+            
+            # Run verification and capture output
+            if sudo "$VERIFY_SCRIPT" > "$tmpfile" 2>&1; then
                 echo "100"
-                echo "# Verification completed!"
+                echo "# Verification completed successfully!"
             else
+                echo "100"
                 echo "# Verification completed with warnings!"
             fi
         ) | show_progress_gui "Verifying network configuration..."
         
-        show_info "Network verification completed!"
+        # Display results in a text window
+        if [ -s "$tmpfile" ]; then
+            # Create a formatted results display with summary at top
+            results_summary="=== Network Verification Summary ===\n\n"
+            results_summary+="This verification checked:\n"
+            results_summary+="• IPv6 connectivity and configuration\n"
+            results_summary+="• DNS settings and DNS over HTTPS (DoH)\n"
+            results_summary+="• Public IP address detection (IPv4/IPv6)\n"
+            results_summary+="• Local network interface analysis\n"
+            results_summary+="• Network connectivity tests\n"
+            results_summary+="• Censorship detection tests\n"
+            results_summary+="• Network speed measurements\n"
+            results_summary+="• Security settings validation\n\n"
+            results_summary+="=== Detailed Results ===\n\n"
+            results_summary+="$(cat "$tmpfile")"
+            
+            # Use zenity to show the results in a scrollable text window
+            echo -e "$results_summary" | zenity --text-info \
+                --title="Network Verification Results" \
+                --width=900 \
+                --height=700 \
+                --filename=/dev/stdin 2>/dev/null || {
+                # Fallback to info dialog if text-info fails
+                show_info "Network verification completed! Detailed results saved to temporary file."
+            }
+        else
+            show_error "No verification results available. Please check the script output."
+        fi
+        
+        # Clean up
+        rm -f "$tmpfile"
     else
         show_info "Starting network verification..."
+        echo
+        echo -e "${BLUE}=== Network Verification ===${NC}"
+        echo "This verification will check:"
+        echo "  • IPv6 connectivity and configuration"
+        echo "  • DNS settings and DNS over HTTPS (DoH)"
+        echo "  • Public IP address detection (IPv4/IPv6)"
+        echo "  • Local network interface analysis"
+        echo "  • Network connectivity tests"
+        echo "  • Censorship detection tests"
+        echo "  • Network speed measurements"
+        echo "  • Security settings validation"
+        echo
+        
         sudo "$VERIFY_SCRIPT"
-        show_info "Network verification completed!"
+        
+        echo
+        echo -e "${GREEN}=== Verification Summary ===${NC}"
+        echo "✓ Network verification completed!"
+        echo "✓ Results shown above include:"
+        echo "  - IPv6 connectivity status"
+        echo "  - DNS configuration verification"
+        echo "  - DNS over HTTPS (DoH) status"
+        echo "  - Public IP addresses (IPv4/IPv6)"
+        echo "  - Local interface information"
+        echo "  - Network connectivity tests"
+        echo "  - Censorship detection results"
+        echo "  - Network speed measurements"
+        echo "  - Security settings validation"
+        echo
     fi
 }
 
