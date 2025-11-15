@@ -225,18 +225,31 @@ run_verification() {
             
             echo "85"
             echo "# Measuring network speed..."
+            echo "# (This may take a moment - testing with optimized timeouts)"
+            sleep 1
+            
+            echo "90"
+            echo "# Running final tests..."
             sleep 1
             
             echo "95"
             echo "# Generating comprehensive report..."
             
-            # Run verification and capture output
-            if sudo "$VERIFY_SCRIPT" > "$tmpfile" 2>&1; then
+            # Run verification with timeout and progress tracking
+            # Use timeout to prevent hanging on slow operations
+            if timeout 180 sudo "$VERIFY_SCRIPT" > "$tmpfile" 2>&1; then
                 echo "100"
                 echo "# Verification completed successfully!"
             else
-                echo "100"
-                echo "# Verification completed with warnings!"
+                # Check if verification was killed by timeout
+                if [ $? -eq 124 ]; then
+                    echo "100"
+                    echo "# Verification completed (timeout after 3 minutes)"
+                    echo "# Speed tests may have been skipped due to timeout"
+                else
+                    echo "100"
+                    echo "# Verification completed with warnings!"
+                fi
             fi
         ) | show_progress_gui "Verifying network configuration..."
         

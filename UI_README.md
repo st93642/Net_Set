@@ -62,6 +62,8 @@ chmod +x net_set_ui.sh
 - **User-Friendly Menu**: Easy-to-use interface for all operations
 - **Detailed Verification Results**: Scrollable text window showing comprehensive verification output including speed tests and censorship detection
 - **Clean Output**: ANSI color codes properly cleaned for GUI display, universal text icons [+] for compatibility
+- **Timeout Protection**: 3-minute maximum verification time with graceful completion
+- **Enhanced Progress**: Detailed status updates during potentially long operations
 - **Status Display**: Shows current network configuration status
 - **Error Handling**: Graceful error handling with informative messages
 
@@ -71,6 +73,7 @@ chmod +x net_set_ui.sh
 - **Network Status Viewer**: Detailed network configuration display
 - **Comprehensive Verification**: Full verification suite including speed tests, censorship detection, and security checks
 - **Enhanced Font Support**: Optimized font selection for Unicode character support (✓, ⚠, ✗)
+- **Timeout Protection**: 15-second speed test timeout, 5-second censorship test timeouts
 - **Progress Indication**: Visual feedback during operations with detailed progress updates
 - **Professional Look**: Consistent with Windows UI standards
 

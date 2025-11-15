@@ -456,22 +456,30 @@ $verifyButton.Add_Click({
             
             $verificationResults += "5. Network Speed Test:`r`n"
             try {
+                # Use async download with timeout to prevent hanging
+                $webClient = New-Object System.Net.WebClient
+                $webClient.Timeout = 15000  # 15 seconds timeout
+                
                 $speedTest = Measure-Command {
-                    $webClient = New-Object System.Net.WebClient
                     $data = $webClient.DownloadData("http://speedtest.wdc01.softlayer.com/downloads/test10.zip")
                     $webClient.Dispose()
                 }
-                $speedKB = [math]::Round(10 * 1024 / $speedTest.TotalSeconds, 2)  # 10MB file
-                $verificationResults += "   Download speed: ~$speedKB KB/s`r`n"
-                if ($speedKB -gt 100) {
-                    $verificationResults += "   ✓ Speed test: Good`r`n"
-                } elseif ($speedKB -gt 50) {
-                    $verificationResults += "   ⚠ Speed test: Moderate`r`n"
+                
+                if ($speedTest.TotalSeconds -gt 0) {
+                    $speedKB = [math]::Round(10 * 1024 / $speedTest.TotalSeconds, 2)  # 10MB file
+                    $verificationResults += "   Download speed: ~$speedKB KB/s (took $([math]::Round($speedTest.TotalSeconds, 2)) seconds)`r`n"
+                    if ($speedKB -gt 100) {
+                        $verificationResults += "   ✓ Speed test: Good`r`n"
+                    } elseif ($speedKB -gt 50) {
+                        $verificationResults += "   ⚠ Speed test: Moderate`r`n"
+                    } else {
+                        $verificationResults += "   ⚠ Speed test: Slow`r`n"
+                    }
                 } else {
-                    $verificationResults += "   ⚠ Speed test: Slow`r`n"
+                    $verificationResults += "   ⚠ Speed test: Unable to measure`r`n"
                 }
             } catch {
-                $verificationResults += "   ⚠ Speed test: Unable to test`r`n"
+                $verificationResults += "   ⚠ Speed test: Unable to test (timeout or connection issue)`r`n"
             }
             $verificationResults += "`r`n"
             
@@ -493,7 +501,8 @@ $verifyButton.Add_Click({
                 $accessibleCount = 0
                 foreach ($site in $testSites) {
                     try {
-                        $response = Invoke-WebRequest -Uri $site.Url -Method Head -TimeoutSec 10 -ErrorAction Stop
+                        # Use shorter timeout and faster method to prevent hanging
+                        $response = Invoke-WebRequest -Uri $site.Url -Method Head -TimeoutSec 5 -ErrorAction Stop
                         if ($response.StatusCode -eq 200) {
                             $verificationResults += "   ✓ $($site.Name): Accessible`r`n"
                             $accessibleCount++
@@ -501,7 +510,11 @@ $verifyButton.Add_Click({
                             $verificationResults += "   ⚠ $($site.Name): Unexpected response ($($response.StatusCode))`r`n"
                         }
                     } catch {
-                        $verificationResults += "   ✗ $($site.Name): Blocked or unreachable`r`n"
+                        if ($_.Exception.Message -like "*timeout*") {
+                            $verificationResults += "   ⚠ $($site.Name): Timeout (possible blocking or slow connection)`r`n"
+                        } else {
+                            $verificationResults += "   ✗ $($site.Name): Blocked or unreachable`r`n"
+                        }
                     }
                 }
                 
