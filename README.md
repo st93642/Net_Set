@@ -25,7 +25,8 @@ See [UI_README.md](UI_README.md) for detailed UI documentation and [INSTALLATION
 
 Planning and architecture for an Android port (non-root-first, VPN-based enforcement):
 
-- [android/ANDROID_ARCHITECTURE.md](android/ANDROID_ARCHITECTURE.md)
+- [android/ANDROID_ARCHITECTURE.md](android/ANDROID_ARCHITECTURE.md) – Architecture evaluation and technology decisions
+- [android/IMPLEMENTATION_PLAN.md](android/IMPLEMENTATION_PLAN.md) – Comprehensive 9-phase implementation roadmap
 
 ## 📋 What These Scripts Do
 
