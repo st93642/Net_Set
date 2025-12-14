@@ -1,0 +1,5 @@
+Initial release of Net_Set Android.
+
+- Status screen showing applied settings
+- Network diagnostics (IPv4/IPv6, DNS, DoH)
+- Run bundled Net_Set scripts (device support varies; root may be required)

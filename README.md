@@ -23,10 +23,19 @@ See [UI_README.md](UI_README.md) for detailed UI documentation and [INSTALLATION
 
 ## 📱 Android
 
-Planning and architecture for an Android port (non-root-first, VPN-based enforcement):
+An Android app is available under [`android/`](android/) which provides a simple UI wrapper for diagnostics and (where supported) local script execution.
 
-- [android/ANDROID_ARCHITECTURE.md](android/ANDROID_ARCHITECTURE.md) – Architecture evaluation and technology decisions
-- [android/IMPLEMENTATION_PLAN.md](android/IMPLEMENTATION_PLAN.md) – Comprehensive 9-phase implementation roadmap
+Key docs:
+
+- [android/README.md](android/README.md) – Building and running the Android app
+- [PRIVACY_POLICY.md](PRIVACY_POLICY.md) – Privacy policy (no data collection)
+- [docs/STORE_LISTING.md](docs/STORE_LISTING.md) – Prepared store listing text
+- [PUBLISHING.md](PUBLISHING.md) – Steps for Google Play / F-Droid / GitHub releases
+
+Background planning:
+
+- [android/ANDROID_ARCHITECTURE.md](android/ANDROID_ARCHITECTURE.md)
+- [android/IMPLEMENTATION_PLAN.md](android/IMPLEMENTATION_PLAN.md)
 
 ## 📋 What These Scripts Do
 

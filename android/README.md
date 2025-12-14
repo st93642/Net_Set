@@ -64,9 +64,26 @@ The repository includes a Gradle wrapper, so you can build without a system Grad
 ```bash
 # Debug APK
 ./gradlew :app:assembleDebug
+```
 
-# Signed Release APK (signed with the debug keystore for internal testing)
+### Release signing
+
+For store distribution you must sign with your own release key.
+
+- Copy `keystore.properties.sample` to `keystore.properties` and fill in your keystore details.
+- Do not commit `keystore.properties` or keystore files.
+
+Build release artifacts:
+
+```bash
+# Play Store bundle (recommended for Google Play)
+./gradlew :app:bundleRelease
+
+# Release APK (signed if keystore.properties is present; otherwise falls back to debug signing)
 ./gradlew :app:assembleRelease
+
+# F-Droid/unsigned build
+./gradlew :app:assembleFdroid
 ```
 
 ## Running

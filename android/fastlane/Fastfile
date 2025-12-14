@@ -1,0 +1,22 @@
+default_platform(:android)
+
+platform :android do
+  desc "Build Google Play AAB (bundleRelease)"
+  lane :play_aab do
+    gradle(task: "clean bundleRelease")
+  end
+
+  desc "Build unsigned APK suitable for F-Droid build validation"
+  lane :fdroid_apk do
+    gradle(task: "clean assembleFdroid")
+  end
+
+  desc "Upload Play Store listing metadata (requires Play Console app + service account)"
+  lane :upload_metadata do
+    supply(
+      track: "internal",
+      skip_upload_apk: true,
+      skip_upload_aab: true
+    )
+  end
+end

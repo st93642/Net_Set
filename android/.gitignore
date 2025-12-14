@@ -51,7 +51,8 @@ captures/
 .idea/navEditor.xml
 
 # Keystore files
-# Uncomment the following lines if you do not want to check your keystore files in.
+# Do not commit signing keys or keystore configuration.
+keystore.properties
 *.jks
 *.keystore
 
