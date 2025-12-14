@@ -1,0 +1,41 @@
+Categories:
+  - Security
+  - Internet
+License: MIT
+AuthorName: Net_Set contributors
+WebSite: https://github.com/st93642/Net_Set
+SourceCode: https://github.com/st93642/Net_Set
+IssueTracker: https://github.com/st93642/Net_Set/issues
+
+AutoName: Net_Set
+Summary: Simple network hardening tool for Android
+Description: |-
+  Net_Set is a simple, open-source network hardening and diagnostics tool for Android.
+
+  It provides:
+
+  - IPv4/IPv6 connectivity checks
+  - DNS resolution checks
+  - Encrypted DNS (DNS-over-HTTPS) reachability checks
+
+  Some functionality depends on device support and may require root.
+
+  Privacy:
+  - No data collection
+  - No analytics
+  - No ads
+
+RepoType: git
+Repo: https://github.com/st93642/Net_Set.git
+
+Builds:
+  - versionName: 1.0.0
+    versionCode: 1
+    commit: v1.0.0
+    subdir: android
+    gradle:
+      - fdroid
+
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.0
+CurrentVersionCode: 1

@@ -19,7 +19,10 @@ Thumbs.db
 /out/
 /bin/
 
-# Android (if/when an Android project is added)
+# Android
 /android/.gradle/
 /android/**/build/
 /android/local.properties
+/android/keystore.properties
+/android/*.jks
+/android/*.keystore

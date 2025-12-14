@@ -20,9 +20,22 @@ android {
         }
     }
 
+    def keystoreProperties = new java.util.Properties()
+    def keystorePropertiesFile = rootProject.file("keystore.properties")
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+    }
+
     signingConfigs {
         release {
-            initWith signingConfigs.debug
+            if (keystorePropertiesFile.exists()) {
+                storeFile rootProject.file(keystoreProperties["storeFile"])
+                storePassword keystoreProperties["storePassword"]
+                keyAlias keystoreProperties["keyAlias"]
+                keyPassword keystoreProperties["keyPassword"]
+            } else {
+                initWith signingConfigs.debug
+            }
         }
     }
 
@@ -32,7 +45,14 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+
+        fdroid {
+            initWith release
+            signingConfig null
+            matchingFallbacks = ["release"]
+        }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8

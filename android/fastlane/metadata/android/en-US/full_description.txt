@@ -1,0 +1,15 @@
+Net_Set is a simple, open-source network hardening and diagnostics tool for Android.
+
+It provides a minimal status screen and a set of connectivity checks to help you validate your network environment:
+
+• IPv4 and IPv6 connectivity tests
+• DNS resolution tests (with selectable resolvers)
+• Encrypted DNS (DNS-over-HTTPS) reachability checks
+
+Where supported by your device, Net_Set can also run the bundled Net_Set scripts to apply network configuration changes. Some operations may require root access.
+
+Privacy:
+Net_Set does not collect data, does not run analytics, and does not include ads.
+
+Source code:
+https://github.com/st93642/Net_Set
