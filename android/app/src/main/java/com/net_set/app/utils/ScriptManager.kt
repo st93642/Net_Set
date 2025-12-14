@@ -149,6 +149,116 @@ class ScriptManager(private val context: Context) {
         }
     }
 
+    fun runDiagnostics(): DiagnosticsResult {
+        Log.d(TAG, "Starting diagnostics")
+        
+        val ipv4Result = testIPv4Connectivity()
+        val ipv6Result = testIPv6Connectivity()
+        val dnsResult = testDNSResolution()
+        val encryptedDnsResult = testEncryptedDNS()
+        val ipv6Enabled = checkIPv6Status()
+        val currentDns = getCurrentDNSServers()
+        
+        return DiagnosticsResult(
+            ipv4Connectivity = ipv4Result,
+            ipv6Connectivity = ipv6Result,
+            dnsResolution = dnsResult,
+            encryptedDns = encryptedDnsResult,
+            ipv6Enabled = ipv6Enabled,
+            currentDnsServers = currentDns,
+            scriptStatus = if (hasExecutedOnLaunch) "Applied" else "Not executed",
+            errorMessages = ""
+        )
+    }
+
+    private fun testIPv4Connectivity(): DiagnosticsResult.TestResult {
+        return try {
+            val process = Runtime.getRuntime().exec(arrayOf("ping", "-c", "1", "-W", "3", "1.1.1.1"))
+            val exitCode = process.waitFor()
+            Log.d(TAG, "IPv4 ping exit code: $exitCode")
+            if (exitCode == 0) DiagnosticsResult.TestResult.PASS else DiagnosticsResult.TestResult.FAIL
+        } catch (e: Exception) {
+            Log.e(TAG, "IPv4 connectivity test error: ${e.message}")
+            DiagnosticsResult.TestResult.FAIL
+        }
+    }
+
+    private fun testIPv6Connectivity(): DiagnosticsResult.TestResult {
+        return try {
+            val process = Runtime.getRuntime().exec(arrayOf("ping6", "-c", "1", "-W", "3", "2606:4700:4700::1111"))
+            val exitCode = process.waitFor()
+            Log.d(TAG, "IPv6 ping exit code: $exitCode")
+            if (exitCode == 0) DiagnosticsResult.TestResult.PASS else DiagnosticsResult.TestResult.FAIL
+        } catch (e: Exception) {
+            Log.e(TAG, "IPv6 connectivity test error: ${e.message}")
+            DiagnosticsResult.TestResult.FAIL
+        }
+    }
+
+    private fun testDNSResolution(): DiagnosticsResult.TestResult {
+        return try {
+            val process = Runtime.getRuntime().exec(arrayOf("nslookup", "cloudflare.com", selectedDNSProvider.ipv4[0]))
+            val exitCode = process.waitFor()
+            val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
+            Log.d(TAG, "DNS resolution exit code: $exitCode, output length: ${output.length}")
+            if (exitCode == 0 && output.contains("cloudflare.com", ignoreCase = true)) {
+                DiagnosticsResult.TestResult.PASS
+            } else {
+                DiagnosticsResult.TestResult.FAIL
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "DNS resolution test error: ${e.message}")
+            DiagnosticsResult.TestResult.FAIL
+        }
+    }
+
+    private fun testEncryptedDNS(): DiagnosticsResult.TestResult {
+        return try {
+            // Test DNS over HTTPS (DoH) using curl if available
+            val process = Runtime.getRuntime().exec(arrayOf(
+                "sh", "-c",
+                "curl -s -m 3 'https://dns.${selectedDNSProvider.displayName.lowercase()}.com/dns-query?name=cloudflare.com&type=A' -H 'Accept: application/dns-json' | grep -q cloudflare && echo pass || echo fail"
+            ))
+            val exitCode = process.waitFor()
+            val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText().trim() }
+            Log.d(TAG, "Encrypted DNS test exit code: $exitCode, output: $output")
+            if (output.contains("pass", ignoreCase = true)) {
+                DiagnosticsResult.TestResult.PASS
+            } else {
+                DiagnosticsResult.TestResult.FAIL
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Encrypted DNS test error: ${e.message}")
+            DiagnosticsResult.TestResult.FAIL
+        }
+    }
+
+    private fun checkIPv6Status(): Boolean {
+        return try {
+            val process = Runtime.getRuntime().exec(arrayOf("cat", "/proc/sys/net/ipv6/conf/all/disable_ipv6"))
+            val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText().trim() }
+            Log.d(TAG, "IPv6 status check: $output")
+            output != "1"
+        } catch (e: Exception) {
+            Log.e(TAG, "IPv6 status check error: ${e.message}")
+            false
+        }
+    }
+
+    private fun getCurrentDNSServers(): String {
+        return try {
+            val process = Runtime.getRuntime().exec(arrayOf("cat", "/etc/resolv.conf"))
+            val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
+            val dnsLines = output.split("\n").filter { it.startsWith("nameserver") }
+            Log.d(TAG, "Current DNS servers: ${dnsLines.take(2).joinToString(", ")}")
+            dnsLines.take(2).joinToString(", ") { it.replace("nameserver ", "").trim() }
+                .ifEmpty { selectedDNSProvider.ipv4[0] }
+        } catch (e: Exception) {
+            Log.e(TAG, "DNS servers check error: ${e.message}")
+            selectedDNSProvider.ipv4[0]
+        }
+    }
+
     private fun tryRunScript(scriptPath: String, useRoot: Boolean): String {
         val process = if (useRoot) {
             Runtime.getRuntime().exec(arrayOf("su", "-c", scriptPath))
