@@ -56,12 +56,17 @@ The app follows a simple architecture:
 To build this project, you need:
 
 1. Android Studio or Android SDK
-2. Gradle 8.2+
-3. Kotlin 1.9.20+
-4. Android SDK 35 (compileSdk)
+2. JDK 17+
+3. Android SDK 35 (compileSdk)
+
+The repository includes a Gradle wrapper, so you can build without a system Gradle install:
 
 ```bash
-./gradlew assembleDebug
+# Debug APK
+./gradlew :app:assembleDebug
+
+# Signed Release APK (signed with the debug keystore for internal testing)
+./gradlew :app:assembleRelease
 ```
 
 ## Running

@@ -2,20 +2,50 @@ package com.net_set.app.utils
 
 import android.content.Context
 import android.util.Log
+import com.net_set.app.BuildConfig
+import org.json.JSONObject
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
-import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Socket
+import java.net.URL
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import javax.net.ssl.HttpsURLConnection
 
 class ScriptManager(private val context: Context) {
     private val TAG = "ScriptManager"
     
     // DNS provider configuration
-    enum class DNSProvider(val displayName: String, val ipv4: List<String>, val ipv6: List<String>) {
-        CLOUDFLARE("Cloudflare", listOf("1.1.1.1", "1.0.0.1"), listOf("2606:4700:4700::1111", "2606:4700:4700::1001")),
-        QUAD9("Quad9", listOf("9.9.9.9", "149.112.112.112"), listOf("2620:fe::fe", "2620:fe::9")),
-        GOOGLE("Google", listOf("8.8.8.8", "8.8.4.4"), listOf("2001:4860:4860::8888", "2001:4860:4860::8844"))
+    enum class DNSProvider(
+        val displayName: String,
+        val ipv4: List<String>,
+        val ipv6: List<String>,
+        val dohEndpoint: String
+    ) {
+        CLOUDFLARE(
+            "Cloudflare",
+            listOf("1.1.1.1", "1.0.0.1"),
+            listOf("2606:4700:4700::1111", "2606:4700:4700::1001"),
+            "https://cloudflare-dns.com/dns-query"
+        ),
+        QUAD9(
+            "Quad9",
+            listOf("9.9.9.9", "149.112.112.112"),
+            listOf("2620:fe::fe", "2620:fe::9"),
+            "https://dns.quad9.net/dns-query"
+        ),
+        GOOGLE(
+            "Google",
+            listOf("8.8.8.8", "8.8.4.4"),
+            listOf("2001:4860:4860::8888", "2001:4860:4860::8844"),
+            "https://dns.google/dns-query"
+        )
     }
     
     var selectedDNSProvider = DNSProvider.CLOUDFLARE
@@ -173,10 +203,9 @@ class ScriptManager(private val context: Context) {
 
     private fun testIPv4Connectivity(): DiagnosticsResult.TestResult {
         return try {
-            val process = Runtime.getRuntime().exec(arrayOf("ping", "-c", "1", "-W", "3", "1.1.1.1"))
-            val exitCode = process.waitFor()
-            Log.d(TAG, "IPv4 ping exit code: $exitCode")
-            if (exitCode == 0) DiagnosticsResult.TestResult.PASS else DiagnosticsResult.TestResult.FAIL
+            val ok = testTcpConnectivity("1.1.1.1", 443, 3000)
+            Log.d(TAG, "IPv4 TCP connectivity: $ok")
+            if (ok) DiagnosticsResult.TestResult.PASS else DiagnosticsResult.TestResult.FAIL
         } catch (e: Exception) {
             Log.e(TAG, "IPv4 connectivity test error: ${e.message}")
             DiagnosticsResult.TestResult.FAIL
@@ -185,10 +214,9 @@ class ScriptManager(private val context: Context) {
 
     private fun testIPv6Connectivity(): DiagnosticsResult.TestResult {
         return try {
-            val process = Runtime.getRuntime().exec(arrayOf("ping6", "-c", "1", "-W", "3", "2606:4700:4700::1111"))
-            val exitCode = process.waitFor()
-            Log.d(TAG, "IPv6 ping exit code: $exitCode")
-            if (exitCode == 0) DiagnosticsResult.TestResult.PASS else DiagnosticsResult.TestResult.FAIL
+            val ok = testTcpConnectivity("2606:4700:4700::1111", 443, 3000)
+            Log.d(TAG, "IPv6 TCP connectivity: $ok")
+            if (ok) DiagnosticsResult.TestResult.PASS else DiagnosticsResult.TestResult.FAIL
         } catch (e: Exception) {
             Log.e(TAG, "IPv6 connectivity test error: ${e.message}")
             DiagnosticsResult.TestResult.FAIL
@@ -197,14 +225,22 @@ class ScriptManager(private val context: Context) {
 
     private fun testDNSResolution(): DiagnosticsResult.TestResult {
         return try {
-            val process = Runtime.getRuntime().exec(arrayOf("nslookup", "cloudflare.com", selectedDNSProvider.ipv4[0]))
-            val exitCode = process.waitFor()
-            val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
-            Log.d(TAG, "DNS resolution exit code: $exitCode, output length: ${output.length}")
-            if (exitCode == 0 && output.contains("cloudflare.com", ignoreCase = true)) {
-                DiagnosticsResult.TestResult.PASS
-            } else {
-                DiagnosticsResult.TestResult.FAIL
+            val resolved = runWithTimeout(3000) {
+                InetAddress.getAllByName("cloudflare.com")
+            }
+
+            when {
+                resolved == null -> {
+                    Log.d(TAG, "DNS resolution timed out")
+                    DiagnosticsResult.TestResult.FAIL
+                }
+
+                resolved.isNotEmpty() -> {
+                    Log.d(TAG, "DNS resolution returned ${resolved.size} address(es)")
+                    DiagnosticsResult.TestResult.PASS
+                }
+
+                else -> DiagnosticsResult.TestResult.FAIL
             }
         } catch (e: Exception) {
             Log.e(TAG, "DNS resolution test error: ${e.message}")
@@ -214,15 +250,24 @@ class ScriptManager(private val context: Context) {
 
     private fun testEncryptedDNS(): DiagnosticsResult.TestResult {
         return try {
-            // Test DNS over HTTPS (DoH) using curl if available
-            val process = Runtime.getRuntime().exec(arrayOf(
-                "sh", "-c",
-                "curl -s -m 3 'https://dns.${selectedDNSProvider.displayName.lowercase()}.com/dns-query?name=cloudflare.com&type=A' -H 'Accept: application/dns-json' | grep -q cloudflare && echo pass || echo fail"
-            ))
-            val exitCode = process.waitFor()
-            val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText().trim() }
-            Log.d(TAG, "Encrypted DNS test exit code: $exitCode, output: $output")
-            if (output.contains("pass", ignoreCase = true)) {
+            val url = URL("${selectedDNSProvider.dohEndpoint}?name=cloudflare.com&type=A")
+            val connection = url.openConnection() as HttpsURLConnection
+
+            connection.connectTimeout = 3000
+            connection.readTimeout = 3000
+            connection.setRequestProperty("Accept", "application/dns-json")
+            connection.setRequestProperty("User-Agent", "Net_Set/${BuildConfig.VERSION_NAME}")
+
+            val responseCode = connection.responseCode
+            val responseBody = connection.inputStream.bufferedReader().use { it.readText() }
+
+            Log.d(TAG, "Encrypted DNS response code: $responseCode")
+
+            val json = JSONObject(responseBody)
+            val status = json.optInt("Status", -1)
+            val answers = json.optJSONArray("Answer")
+
+            if (responseCode in 200..299 && status == 0 && answers != null && answers.length() > 0) {
                 DiagnosticsResult.TestResult.PASS
             } else {
                 DiagnosticsResult.TestResult.FAIL
@@ -230,6 +275,26 @@ class ScriptManager(private val context: Context) {
         } catch (e: Exception) {
             Log.e(TAG, "Encrypted DNS test error: ${e.message}")
             DiagnosticsResult.TestResult.FAIL
+        }
+    }
+
+    private fun <T> runWithTimeout(timeoutMs: Long, block: () -> T): T? {
+        val executor = Executors.newSingleThreadExecutor()
+        return try {
+            val future = executor.submit<T> { block() }
+            future.get(timeoutMs, TimeUnit.MILLISECONDS)
+        } catch (_: TimeoutException) {
+            null
+        } finally {
+            executor.shutdownNow()
+        }
+    }
+
+    private fun testTcpConnectivity(address: String, port: Int, timeoutMs: Int): Boolean {
+        return Socket().use { socket ->
+            val inetAddress = InetAddress.getByName(address)
+            socket.connect(InetSocketAddress(inetAddress, port), timeoutMs)
+            true
         }
     }
 
