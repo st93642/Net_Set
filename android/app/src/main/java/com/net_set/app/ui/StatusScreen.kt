@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -14,12 +15,14 @@ import androidx.compose.ui.unit.dp
 import com.net_set.app.utils.DiagnosticsResult
 import com.net_set.app.utils.ScriptManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
 fun StatusScreen() {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scriptManager = remember { ScriptManager(context) }
+    val coroutineScope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
     var scriptStatus by remember { mutableStateOf("Ready") }
     var showOutput by remember { mutableStateOf(false) }
@@ -39,7 +42,6 @@ fun StatusScreen() {
 
     LaunchedEffect(Unit) {
         // Execute network configuration on app launch
-        kotlinx.coroutines.GlobalScope.launch {
             scriptStatus = "Executing on launch..."
             isLoading = true
             
@@ -142,7 +144,7 @@ fun StatusScreen() {
                     isLoading = true
                     scriptStatus = "Running..."
                     
-                    kotlinx.coroutines.GlobalScope.launch {
+                    coroutineScope.launch {
                         val result = withContext(Dispatchers.IO) {
                             scriptManager.runNetSetScript()
                         }
@@ -164,7 +166,7 @@ fun StatusScreen() {
                 onClick = {
                     isDiagnosticsLoading = true
                     
-                    kotlinx.coroutines.GlobalScope.launch {
+                    coroutineScope.launch {
                         val result = withContext(Dispatchers.IO) {
                             scriptManager.runDiagnostics()
                         }
@@ -185,7 +187,7 @@ fun StatusScreen() {
                     isLoading = true
                     scriptStatus = "Running legacy diagnostics..."
                     
-                    kotlinx.coroutines.GlobalScope.launch {
+                    coroutineScope.launch {
                         val result = withContext(Dispatchers.IO) {
                             scriptManager.runNetworkVerifyScript()
                         }

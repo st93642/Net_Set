@@ -11,6 +11,7 @@ A collection of scripts to configure secure network settings with IPv6, DNS over
 - 📦 **Standalone executables**: Build scripts for both platforms
 
 **Quick UI Start:**
+
 ```bash
 # Linux
 ./net_set_ui.sh
@@ -23,19 +24,26 @@ See [UI_README.md](UI_README.md) for detailed UI documentation and [INSTALLATION
 
 ## 📱 Android
 
-An Android app is available under [`android/`](android/) which provides a simple UI wrapper for diagnostics and (where supported) local script execution.
+A native Android app (Phase 1 complete) is available under [`android/`](android/) with a Jetpack Compose UI.
 
-Key docs:
+**Current Features:**
 
-- [android/README.md](android/README.md) – Building and running the Android app
+- ✅ DNS provider selection (Cloudflare, Quad9, Google)
+- ✅ Comprehensive network diagnostics (IPv4/IPv6/DNS/DoH)
+- ✅ Auto-execution on launch
+- ✅ Material Design 3 UI
+- ✅ Android-native configuration + legacy script support
+
+**Key Documentation:**
+
+- [android/README.md](android/README.md) – Complete feature list, building, and running instructions
+- [android/ANDROID_ARCHITECTURE.md](android/ANDROID_ARCHITECTURE.md) – Architecture decisions and technology evaluation
+- [android/IMPLEMENTATION_PLAN.md](android/IMPLEMENTATION_PLAN.md) – Phased development roadmap
 - [PRIVACY_POLICY.md](PRIVACY_POLICY.md) – Privacy policy (no data collection)
 - [docs/STORE_LISTING.md](docs/STORE_LISTING.md) – Prepared store listing text
 - [PUBLISHING.md](PUBLISHING.md) – Steps for Google Play / F-Droid / GitHub releases
 
-Background planning:
-
-- [android/ANDROID_ARCHITECTURE.md](android/ANDROID_ARCHITECTURE.md)
-- [android/IMPLEMENTATION_PLAN.md](android/IMPLEMENTATION_PLAN.md)
+**Future Phases:** VPN-based DNS enforcement, per-app firewall, background services (see [IMPLEMENTATION_PLAN.md](android/IMPLEMENTATION_PLAN.md))
 
 ## 📋 What These Scripts Do
 
@@ -51,6 +59,7 @@ Background planning:
 ### 🎯 Recommended: Use the Desktop UI
 
 #### Linux Users
+
 ```bash
 # Download and run the UI
 git clone https://github.com/st93642/Net_Set.git
@@ -60,6 +69,7 @@ chmod +x net_set_ui.sh
 ```
 
 #### Windows Users
+
 ```powershell
 # Download and extract files, then run
 .\net_set_ui.ps1
