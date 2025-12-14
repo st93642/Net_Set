@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.net_set.app.utils.DiagnosticsResult
 import com.net_set.app.utils.ScriptManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,6 +26,8 @@ fun StatusScreen() {
     var scriptOutput by remember { mutableStateOf("") }
     var hasLaunchExecuted by remember { mutableStateOf(false) }
     var selectedProviderIndex by remember { mutableStateOf(0) }
+    var diagnosticsResult by remember { mutableStateOf<DiagnosticsResult?>(null) }
+    var isDiagnosticsLoading by remember { mutableStateOf(false) }
     
     val dnsProviders = remember {
         listOf(
@@ -72,12 +75,8 @@ fun StatusScreen() {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        // Status Card
-        StatusCard(
-            title = "Script Status",
-            status = scriptStatus,
-            icon = if (scriptStatus == "Ready") Icons.Default.CheckCircle else Icons.Default.Warning
-        )
+        // Applied Settings Section
+        AppliedSettingsCard(diagnosticsResult, scriptStatus)
 
         // DNS Provider Selection
         Card(
@@ -137,13 +136,12 @@ fun StatusScreen() {
         }
 
         // Action Buttons
-        if (!isLoading) {
+        if (!isLoading && !isDiagnosticsLoading) {
             Button(
                 onClick = {
                     isLoading = true
                     scriptStatus = "Running..."
                     
-                    // Run network configuration script
                     kotlinx.coroutines.GlobalScope.launch {
                         val result = withContext(Dispatchers.IO) {
                             scriptManager.runNetSetScript()
@@ -162,10 +160,30 @@ fun StatusScreen() {
                 Text("Run Network Configuration")
             }
 
+            Button(
+                onClick = {
+                    isDiagnosticsLoading = true
+                    
+                    kotlinx.coroutines.GlobalScope.launch {
+                        val result = withContext(Dispatchers.IO) {
+                            scriptManager.runDiagnostics()
+                        }
+                        
+                        diagnosticsResult = result
+                        isDiagnosticsLoading = false
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.NetworkCheck, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Run Diagnostics")
+            }
+
             OutlinedButton(
                 onClick = {
                     isLoading = true
-                    scriptStatus = "Running diagnostics..."
+                    scriptStatus = "Running legacy diagnostics..."
                     
                     kotlinx.coroutines.GlobalScope.launch {
                         val result = withContext(Dispatchers.IO) {
@@ -173,16 +191,16 @@ fun StatusScreen() {
                         }
                         
                         scriptOutput = result
-                        scriptStatus = "Diagnostics completed"
+                        scriptStatus = "Legacy diagnostics completed"
                         isLoading = false
                         showOutput = true
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Default.NetworkCheck, contentDescription = null)
+                Icon(Icons.Default.Info, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Run Network Diagnostics")
+                Text("Run Network Verify Script")
             }
         } else {
             // Loading state
@@ -194,6 +212,11 @@ fun StatusScreen() {
             ) {
                 CircularProgressIndicator()
             }
+        }
+
+        // Diagnostics Results
+        if (diagnosticsResult != null) {
+            DiagnosticsCard(diagnosticsResult!!)
         }
 
         // Script Output
@@ -275,44 +298,161 @@ fun StatusScreen() {
 }
 
 @Composable
-fun StatusCard(
-    title: String,
-    status: String,
-    icon: ImageVector
-) {
+fun AppliedSettingsCard(diagnosticsResult: DiagnosticsResult?, scriptStatus: String) {
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = if (status == "Ready" || status.contains("completed", ignoreCase = true)) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.tertiary
-                }
-            )
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = title,
+                    text = "Applied Settings",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+            }
+
+            Divider()
+
+            SettingRow(
+                label = "Script Status",
+                value = diagnosticsResult?.scriptStatus ?: scriptStatus
+            )
+
+            SettingRow(
+                label = "Current DNS",
+                value = diagnosticsResult?.currentDnsServers ?: "Unknown"
+            )
+
+            SettingRow(
+                label = "IPv6 Status",
+                value = if (diagnosticsResult?.ipv6Enabled == true) "Enabled" else "Disabled"
+            )
+        }
+    }
+}
+
+@Composable
+fun SettingRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun DiagnosticsCard(result: DiagnosticsResult) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.NetworkCheck,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = status,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "Diagnostics Results",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Divider()
+
+            DiagnosticTestRow(
+                test = "IPv4 Connectivity",
+                result = result.ipv4Connectivity
+            )
+
+            DiagnosticTestRow(
+                test = "IPv6 Connectivity",
+                result = result.ipv6Connectivity
+            )
+
+            DiagnosticTestRow(
+                test = "DNS Resolution",
+                result = result.dnsResolution
+            )
+
+            DiagnosticTestRow(
+                test = "Encrypted DNS",
+                result = result.encryptedDns
+            )
+
+            if (result.errorMessages.isNotEmpty()) {
+                Divider()
+                Text(
+                    text = "Errors:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+                Text(
+                    text = result.errorMessages,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
                 )
             }
         }
+    }
+}
+
+@Composable
+fun DiagnosticTestRow(test: String, result: DiagnosticsResult.TestResult) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = test,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = when (result) {
+                DiagnosticsResult.TestResult.PASS -> "✓ Pass"
+                DiagnosticsResult.TestResult.FAIL -> "✗ Fail"
+                DiagnosticsResult.TestResult.PENDING -> "⏳ Pending"
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = when (result) {
+                DiagnosticsResult.TestResult.PASS -> MaterialTheme.colorScheme.primary
+                DiagnosticsResult.TestResult.FAIL -> MaterialTheme.colorScheme.error
+                DiagnosticsResult.TestResult.PENDING -> MaterialTheme.colorScheme.outline
+            }
+        )
     }
 }
