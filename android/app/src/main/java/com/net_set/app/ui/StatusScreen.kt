@@ -23,9 +23,33 @@ fun StatusScreen() {
     var scriptStatus by remember { mutableStateOf("Ready") }
     var showOutput by remember { mutableStateOf(false) }
     var scriptOutput by remember { mutableStateOf("") }
+    var hasLaunchExecuted by remember { mutableStateOf(false) }
+    var selectedProviderIndex by remember { mutableStateOf(0) }
+    
+    val dnsProviders = remember {
+        listOf(
+            ScriptManager.DNSProvider.CLOUDFLARE,
+            ScriptManager.DNSProvider.QUAD9,
+            ScriptManager.DNSProvider.GOOGLE
+        )
+    }
 
     LaunchedEffect(Unit) {
-        // Scripts are copied during ScriptManager initialization
+        // Execute network configuration on app launch
+        kotlinx.coroutines.GlobalScope.launch {
+            scriptStatus = "Executing on launch..."
+            isLoading = true
+            
+            val result = withContext(Dispatchers.IO) {
+                scriptManager.executeOnLaunch()
+            }
+            
+            scriptOutput = result
+            scriptStatus = "Launch execution completed"
+            isLoading = false
+            hasLaunchExecuted = true
+            showOutput = true
+        }
     }
 
     Column(
@@ -54,6 +78,63 @@ fun StatusScreen() {
             status = scriptStatus,
             icon = if (scriptStatus == "Ready") Icons.Default.CheckCircle else Icons.Default.Warning
         )
+
+        // DNS Provider Selection
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Dns,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "DNS Provider",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    dnsProviders.forEachIndexed { index, provider ->
+                        FilterChip(
+                            onClick = {
+                                selectedProviderIndex = index
+                                scriptManager.setDNSProvider(provider)
+                            },
+                            label = {
+                                Text(provider.displayName)
+                            },
+                            selected = selectedProviderIndex == index,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Selected: ${dnsProviders[selectedProviderIndex].displayName}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
 
         // Action Buttons
         if (!isLoading) {
@@ -184,7 +265,7 @@ fun StatusScreen() {
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "This app bundles the Net_Set shell scripts and provides a simple interface to run them on Android. Note: Some features may require root access to function properly.",
+                    text = "This app automatically executes network configuration scripts on launch. Network settings are applied using the selected DNS provider. Note: Full features require root access for system-level DNS configuration.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
