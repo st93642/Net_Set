@@ -1,0 +1,25 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+*.iml
+
+# Logs / temp
+*.log
+*.tmp
+*.bak
+*~
+
+# Build outputs
+/dist/
+/build/
+/out/
+/bin/
+
+# Android (if/when an Android project is added)
+/android/.gradle/
+/android/**/build/
+/android/local.properties
