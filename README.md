@@ -21,6 +21,12 @@ A collection of scripts to configure secure network settings with IPv6, DNS over
 
 See [UI_README.md](UI_README.md) for detailed UI documentation and [INSTALLATION.md](INSTALLATION.md) for installation guide.
 
+## 📱 Android
+
+Planning and architecture for an Android port (non-root-first, VPN-based enforcement):
+
+- [android/ANDROID_ARCHITECTURE.md](android/ANDROID_ARCHITECTURE.md)
+
 ## 📋 What These Scripts Do
 
 - **Enable IPv6** on all network interfaces
