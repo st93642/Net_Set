@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Net_Set</string>
+    <string name="run_network_config">Run Network Configuration</string>
+    <string name="run_diagnostics">Run Network Diagnostics</string>
+    <string name="script_status">Script Status</string>
+    <string name="ready">Ready</string>
+    <string name="completed">Completed</string>
+    <string name="running">Running...</string>
+    <string name="information">Information</string>
+    <string name="info_text">This app bundles the Net_Set shell scripts and provides a simple interface to run them on Android. Note: Some features may require root access to function properly.</string>
+    <string name="network_config_desc">Configure IPv6, DHCP DNS isolation, DNS over TLS</string>
+    <string name="network_diagnostics_desc">Run connectivity and censorship tests</string>
+</resources>
