@@ -1,0 +1,3 @@
+[submodule "Norm-linter"]
+	path = Norm-linter
+	url = https://github.com/st93642/Norm-linter.git
